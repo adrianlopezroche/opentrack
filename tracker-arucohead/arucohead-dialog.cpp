@@ -36,6 +36,8 @@ arucohead_dialog::arucohead_dialog() : // NOLINT(cppcoreguidelines-pro-type-memb
     tie_setting(s.camera_name, ui.cmbCameraName);
     tie_setting(s.zoom, ui.sbZoom);
     tie_setting(s.fov, ui.sbFOV);
+    tie_setting(s.marker_min_angle, ui.sbMarkerMinimumAngle);
+    tie_setting(s.marker_max_angle, ui.sbMarkerMaximumAngle);
 
     connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(doOK()));
     connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(doCancel()));

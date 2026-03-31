@@ -175,8 +175,8 @@ void arucohead_tracker::process_frame(cv::Mat &image)
             /* Exclude markers that are too ambiguous, too close to head-on, or too oblique.
             */
             if (error_ratio > ARUCOHEAD_MARKER_EXCLUSION_AMBIGUITY_THRESHOLD ||
-                marker_z_angles[id] < CV_PI / 180.0 * ARUCOHEAD_MARKER_EXCLUSION_ANGLE_LOW_THRESHOLD ||
-                marker_z_angles[id] > CV_PI / 180.0 * ARUCOHEAD_MARKER_EXCLUSION_ANGLE_HIGH_THRESHOLD)
+                marker_z_angles[id] < CV_PI / 180.0 * s.marker_min_angle ||
+                marker_z_angles[id] > CV_PI / 180.0 * s.marker_max_angle)
             {
                 excluded_markers.insert(id);
             }

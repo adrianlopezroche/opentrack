@@ -35,6 +35,8 @@ struct settings : public opts
     value<QString> camera_name { b, "camera_name", "" };
     value<int> zoom { b, "zoom", 100 };
     value<int> fov { b, "fov", 60 };
+    value<int> marker_min_angle { b, "marker_min_angle", 15 };
+    value<int> marker_max_angle { b, "marker_max_angle", 55 };
 
     settings();
 };
