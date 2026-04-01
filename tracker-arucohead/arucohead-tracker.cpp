@@ -205,29 +205,16 @@ void arucohead_tracker::process_frame(cv::Mat &image)
         } else if (ids.size() > 0) {
             /* Fallback: no good markers, so choose among the remaining markers.
             */
-            std::sort(ids.begin(), ids.end(), [&marker_z_angles, &marker_error_ratios](const auto &a, const auto &b) {
-                if (marker_error_ratios[a] < marker_error_ratios[b])
-                    return true;
-                else
-                    return false;
+            std::sort(ids.begin(), ids.end(), [&marker_z_angles, this](const auto &a, const auto &b) {
+                const double sorting_angle_a = fabs(marker_z_angles[a] - CV_PI / 180.0 * s.marker_min_angle);
+                const double sorting_angle_b = fabs(marker_z_angles[b] - CV_PI / 180.0 * s.marker_min_angle);
+
+                return sorting_angle_a < sorting_angle_b;
             });
 
-            /* Add first marker.
+            /* Use the first marker.
             */
-            std::vector<int> added_ids = { ids[0] };
-
-            /* Also add any remaining markers that have acceptable error ratios.
-             */
-            for (size_t i = 1; i < ids.size(); ++i) {
-                const int id = ids[i];
-
-                if (marker_error_ratios[id] < ARUCOHEAD_MARKER_REPROJECTION_ERROR_THRESHOLD)
-                    added_ids.push_back(id);
-                else
-                    break;
-            }
-
-            ids = added_ids;
+            ids = { ids[0] };
         }
     }
 
