@@ -206,6 +206,14 @@ void arucohead_tracker::process_frame(cv::Mat &image)
             /* Fallback: no good markers, so choose among the remaining markers.
             */
             std::sort(ids.begin(), ids.end(), [&marker_z_angles, this](const auto &a, const auto &b) {
+                const bool head_has_a = head.has_handle(a);
+                const bool head_has_b = head.has_handle(b);
+
+                if (head_has_a && !head_has_b)
+                    return true;
+                else if (!head_has_a && head_has_b)
+                    return false;
+
                 const double sorting_angle_a = fabs(marker_z_angles[a] - CV_PI / 180.0 * s.marker_min_angle);
                 const double sorting_angle_b = fabs(marker_z_angles[b] - CV_PI / 180.0 * s.marker_min_angle);
 
