@@ -291,10 +291,7 @@ namespace arucohead {
         return {rvec_local, shrink_tvec(tvec_local, xz_reference, y_reference)};
     }
 
-    double get_marker_z_angle(const cv::Vec3d &rvec) {
-        cv::Mat R;
-        cv::Rodrigues(rvec, R);
-
+    double get_marker_z_angle(const cv::Mat &R) {
         const cv::Vec3d marker_z(R.at<double>(0, 2), R.at<double>(1, 2), R.at<double>(2, 2));
         const cv::Vec3d camera_z(0.0, 0.0, -1.0);
 
@@ -302,6 +299,13 @@ namespace arucohead {
         const double angle = std::acos(cosine);
 
         return angle;
+    }
+
+    double get_marker_z_angle(const cv::Vec3d &rvec) {
+        cv::Mat R;
+        cv::Rodrigues(rvec, R);
+
+        return get_marker_z_angle(R);
     }
 
     double angle_between_rotations(const cv::Vec3d &v1, const cv::Vec3d &v2) {
