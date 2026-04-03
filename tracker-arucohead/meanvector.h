@@ -24,7 +24,7 @@ namespace arucohead {
         void update(const cv::Vec3d &vector);
         int sample_count();
         int get_max_sample_count();
-        const cv::Vec3d &get();
+        const cv::Vec3d &get() const;
 
     private:
         std::vector<cv::Vec3d> vectors;

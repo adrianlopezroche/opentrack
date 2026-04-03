@@ -37,7 +37,7 @@ namespace arucohead {
         return max_sample_count;
     }
 
-    const cv::Vec3d &MeanVector::get() {
+    const cv::Vec3d &MeanVector::get() const {
         return cached_value;
     }
 }
