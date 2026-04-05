@@ -17,6 +17,7 @@
 #include "aruco/markerdetector.h"
 #include "arucohead-dialog.h"
 #include "head.h"
+#include "anglecoveragetracker.h"
 
 class arucohead_dialog;
 
@@ -30,13 +31,26 @@ public:
     void run() override;
 
 private:
+    struct marker_detection_info {
+        int id;
+        std::vector<cv::Point2f> corners;
+
+        marker_detection_info(int id, const std::vector<cv::Point2f> &corners) : id(id), corners(corners)
+        {}
+    };
+
     arucohead::Head head;
     aruco::MarkerDetector detector;
     std::unique_ptr<video::impl::camera> camera;
     cv::Mat camera_matrix;
     std::vector<double> dist_coeffs;
+    cv::Rect2f last_roi;
     bool has_marker;
     std::unordered_map<int, cv::Vec3d> previous_marker_rvecs;
+    std::vector<marker_detection_info> detected_markers;
+    std::unordered_set<int> marker_highlight_set;
+    arucohead::AngleCoverageTracker visited_angles;
+    arucohead::AngleCoverageBin last_bin;
     settings s;
     std::unique_ptr<cv_video_widget> videoWidget;
     std::unique_ptr<QHBoxLayout> layout;
@@ -46,10 +60,12 @@ private:
     QMutex data_mtx;
 
     bool open_camera();
-    void process_frame(cv::Mat& frame);
+    bool process_frame(cv::Mat& frame, const cv::Rect2f *roi = nullptr);
     cv::Mat build_camera_matrix(int image_width, int image_height, double diagonal_fov);
+    cv::Rect2f get_marker_detected_region(const std::vector<marker_detection_info> &markers);
+    bool markers_disappeared(const std::vector<int> &expected, const std::vector<marker_detection_info> &detected);
     void draw_head_bounding_box(cv::Mat &image);
-    void draw_marker_border(cv::Mat &image, const std::vector<cv::Point2f> &image_points, int id);
+    void draw_marker_border(cv::Mat &image, const std::vector<cv::Point2f> &image_points, int id, const cv::Scalar &marker_border = cv::Scalar(0, 0, 255));
     void draw_axes(cv::Mat &image, const cv::Vec3d &rvec, const cv::Vec3d &tvec, double axis_length=1, bool color=true);
     void update_fps();
 

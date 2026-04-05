@@ -56,13 +56,8 @@ bool arucohead_tracker::open_camera()
 
 /* Detect markers, update head pose, and draw AR elements.
 */
-void arucohead_tracker::process_frame(cv::Mat &image)
+bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2f *roi)
 {
-    /* Marker corners and IDs.
-    */
-    std::vector<std::vector<cv::Point2f>> corners;
-    std::vector<int> ids;
-
     /* Pose vectors for each detected marker.
     */
     std::unordered_map<int, cv::Vec3d> marker_rvecs;
@@ -90,8 +85,25 @@ void arucohead_tracker::process_frame(cv::Mat &image)
         -marker_size_cm / 2.0, -marker_size_cm / 2.0, 0.0
     );
 
+    /* Create ROI image.
+    */
+    cv::Mat image;
+
+    if (roi) {
+        if (roi->width > 0 && roi->height > 0) {
+            image = frame(*roi & cv::Rect2f(0, 0, frame.cols, frame.rows));
+        } else {
+            image = frame;
+            roi = nullptr;
+        }
+    } else {
+        image = frame;
+    }
+
     /* Detect markers and draw their borders.
     */
+    detected_markers.clear();
+
     if (s.aruco_dictionary == arucohead_dictionary::ARUCOHEAD_DICT_ARUCO_ORIGINAL) {
         /* Use OpenTrack's ArUco fork for original ArUco dictionary.
         */
@@ -105,10 +117,7 @@ void arucohead_tracker::process_frame(cv::Mat &image)
             if (marker.id < min_marker_id || marker.id > max_marker_id)
                 continue;
 
-            corners.push_back(marker);
-            ids.push_back(marker.id);
-
-            draw_marker_border(image, marker, marker.id);
+            detected_markers.push_back(marker_detection_info(marker.id, marker));
         }
     } else {
         /* Use ArUco Nano for MIP 36h12 and AprilTag 36h11 dictionaries.
@@ -122,22 +131,41 @@ void arucohead_tracker::process_frame(cv::Mat &image)
             if (marker.id < min_marker_id || marker.id > max_marker_id)
                 continue;
 
-            corners.push_back(marker);
-            ids.push_back(marker.id);
-
-            marker.draw(image);
+            detected_markers.push_back(marker_detection_info(marker.id, marker));
         }
     }
 
+    /* Express corners in terms of original frame, if necessary.
+    */
+    if (roi != nullptr) {
+        for (auto &marker : detected_markers) {
+            for (auto &corner : marker.corners) {
+                corner.x += roi->x;
+                corner.y += roi->y;
+            }
+        }
+    }
+
+    /* If no markers detected and ROI is not null, signal need to reset ROI.
+    */
+    bool reset_roi;
+
+    if (detected_markers.size() == 0 && roi != nullptr)
+        return false;
+    else
+        reset_roi = false;
+
+    last_roi = get_marker_detected_region(detected_markers);
+
     /* Caclulate poses for detected markers.
     */
-    for (size_t i = 0; i < ids.size(); ++i) {
+    for (size_t i = 0; i < detected_markers.size(); ++i) {
         std::vector<cv::Vec3d> rvecs;
         std::vector<cv::Vec3d> tvecs;
         std::vector<double> reprojection_errors;
 
-        if (cv::solvePnPGeneric(objectPoints, corners[i], camera_matrix, dist_coeffs, rvecs, tvecs, false, cv::SOLVEPNP_IPPE, cv::noArray(), cv::noArray(), reprojection_errors)) {
-            const int id = ids[i];
+        if (cv::solvePnPGeneric(objectPoints, detected_markers[i].corners, camera_matrix, dist_coeffs, rvecs, tvecs, false, cv::SOLVEPNP_IPPE, cv::noArray(), cv::noArray(), reprojection_errors)) {
+            const int id = detected_markers[i].id;
 
             /* Choose the best solution among the two candidates. */
             const double error0 = reprojection_errors[0];
@@ -189,55 +217,65 @@ void arucohead_tracker::process_frame(cv::Mat &image)
 
     /* Prune away unreliable markers unless none would remain.
      */
+    std::vector<marker_detection_info> selected_markers;
+
+    marker_highlight_set.clear();
+
     const size_t excluded_marker_count = excluded_markers.size();
 
     if (excluded_marker_count > 0) {
-        if (excluded_marker_count < ids.size()) {
+        if (excluded_marker_count < detected_markers.size()) {
             /* Keep only reliable markers.
             */
-            std::vector<int> pruned_markers;
-
-            for (size_t i = 0; i < ids.size(); ++i)
-                if (excluded_markers.count(ids[i]) == 0)
-                    pruned_markers.push_back(ids[i]);
-
-            ids = pruned_markers;
-        } else if (ids.size() > 0) {
+            for (size_t i = 0; i < detected_markers.size(); ++i) {
+                if (excluded_markers.count(detected_markers[i].id) == 0) {
+                    selected_markers.push_back(detected_markers[i]);
+                    marker_highlight_set.insert(detected_markers[i].id);
+                }
+            }
+        } else if (detected_markers.size() > 0) {
             /* Fallback: no good markers, so choose among the remaining markers.
             */
-            std::sort(ids.begin(), ids.end(), [&marker_z_angles, this](const auto &a, const auto &b) {
-                const bool head_has_a = head.has_handle(a);
-                const bool head_has_b = head.has_handle(b);
+            std::sort(detected_markers.begin(), detected_markers.end(), [&marker_z_angles, this](const auto &a, const auto &b) {
+                const bool head_has_a = head.has_handle(a.id);
+                const bool head_has_b = head.has_handle(b.id);
 
                 if (head_has_a && !head_has_b)
                     return true;
                 else if (!head_has_a && head_has_b)
                     return false;
 
-                const double sorting_angle_a = fabs(marker_z_angles[a] - CV_PI / 180.0 * s.marker_min_angle);
-                const double sorting_angle_b = fabs(marker_z_angles[b] - CV_PI / 180.0 * s.marker_min_angle);
+                const double sorting_angle_a = fabs(marker_z_angles[a.id] - CV_PI / 180.0 * s.marker_min_angle);
+                const double sorting_angle_b = fabs(marker_z_angles[b.id] - CV_PI / 180.0 * s.marker_min_angle);
 
                 return sorting_angle_a < sorting_angle_b;
             });
 
             /* Use the first marker.
             */
-            ids = { ids[0] };
+            selected_markers = { detected_markers[0] };
+
+            marker_highlight_set.insert(detected_markers[0].id);
         }
+    } else {
+        selected_markers = detected_markers;
+
+        for (const auto &marker : detected_markers)
+            marker_highlight_set.insert(marker.id);
     }
 
     /* Find first marker if none has yet been detected.
     */
     if (!has_marker) {
-        if (!ids.empty()) {
+        if (!selected_markers.empty()) {
             double best_marker_x = circumference_to_radius(s.head_circumference_cm) * 2;
             double best_marker_z = 0;
             cv::Vec3d best_marker_rvec;
             cv::Vec3d best_marker_tvec;
             int best_marker_id = 0;
 
-            for (size_t i = 0; i < ids.size(); ++i) {
-                const int id = ids[i];
+            for (size_t i = 0; i < selected_markers.size(); ++i) {
+                const int id = selected_markers[i].id;
 
                 if (marker_rvecs.count(id) > 0) {
                     auto v = get_xz_direction_vector(marker_rvecs[id]);
@@ -269,16 +307,16 @@ void arucohead_tracker::process_frame(cv::Mat &image)
         }
     }
     
-    if (has_marker && !ids.empty()) {
+    if (has_marker && !selected_markers.empty()) {
         /* Compute poses for known markers.
         */
-        for (size_t i = 0; i < ids.size(); ++i) {
-            const int id = ids[i];
+        for (size_t i = 0; i < selected_markers.size(); ++i) {
+            const int id = selected_markers[i].id;
 
             if (head.has_handle(id)) {
                 const auto sample_count = head.get_handle(id).rvec_local.get_max_sample_count();
 
-                if (sample_count < ARUCOHEAD_MIN_VECTOR_SAMPLES && ids.size() != 1)
+                if (sample_count < ARUCOHEAD_MIN_VECTOR_SAMPLES && selected_markers.size() != 1)
                     continue;
 
                 if (marker_rvecs.count(id) > 0)
@@ -299,8 +337,8 @@ void arucohead_tracker::process_frame(cv::Mat &image)
 
             /* Compute local transforms for each marker, adding or updating handles as needed.
             */
-            for (size_t i = 0; i < ids.size(); ++i) {
-                const int id = ids[i];
+            for (size_t i = 0; i < selected_markers.size(); ++i) {
+                const int id = selected_markers[i].id;
 
                 if (marker_rvecs.count(id) > 0) {
                     if (!head.has_handle(id)) {
@@ -323,11 +361,33 @@ void arucohead_tracker::process_frame(cv::Mat &image)
             }
         }
 
-        /* Draw head bounding box and coordinate axes.
+        /* Check detected markers against expectations and signal need to reset ROI if these don't match.
         */
-        draw_head_bounding_box(image);
-        draw_axes(image, head.rvec, head.tvec, circumference_to_radius(s.head_circumference_cm) * 1.5);
+        cv::Mat R;
+        cv::Rodrigues(head.rvec, R);
+        const auto euler = rotation_matrix_to_euler_zyx(R);
+
+        const auto bin = visited_angles.get_bin(euler[0], euler[1]);
+
+        if (bin != last_bin && visited_angles.get_visit_count(last_bin) < ARUCOHEAD_ANGLE_COVERAGE_VISIT_THRESHOLD)
+            visited_angles.clear_visits(last_bin);
+
+        if (roi == nullptr && visited_angles.get_visit_count(bin) < ARUCOHEAD_ANGLE_COVERAGE_VISIT_THRESHOLD)
+            visited_angles.add_visit(bin);
+
+        if (roi != nullptr) {
+            if (head.num_handles() < s.number_of_markers && visited_angles.get_visit_count(bin) < ARUCOHEAD_ANGLE_COVERAGE_VISIT_THRESHOLD) {
+                reset_roi = true;
+            } else {
+                auto expected_ids = head.get_expected_visible_ids(CV_PI / 180.0 * s.marker_max_angle);
+
+                if (markers_disappeared(expected_ids, detected_markers))
+                    reset_roi = true;
+            }
+        }
     }
+
+    return !reset_roi;
 }
 
 /* Generate a camera matrix for the given image dimension and field of view (in radians).
@@ -348,6 +408,52 @@ cv::Mat arucohead_tracker::build_camera_matrix(int image_width, int image_height
     };
 
     return cv::Mat(3, 3, CV_64F, data).clone();
+}
+
+cv::Rect2f arucohead_tracker::get_marker_detected_region(const std::vector<marker_detection_info> &markers)
+{
+    if (markers.size() == 0 || markers[0].corners.size() == 0)
+        return cv::Rect2f(0, 0, 0, 0);
+
+    cv::Point2f min = markers[0].corners[0];
+    cv::Point2f max = markers[0].corners[0];
+
+    for (const auto &marker : markers) {
+        for (const auto &corner : marker.corners) {
+            min.x = std::min(corner.x, min.x);
+            min.y = std::min(corner.y, min.y);
+            max.x = std::max(corner.x, max.x);
+            max.y = std::max(corner.y, max.y);
+        }
+    }
+
+    const double w = max.x - min.x;
+    const double h = max.y - min.y;
+
+    min.x -= w * ARUCOHEAD_ROI_GROWTH_FACTOR / 2.0;
+    min.y -= h * ARUCOHEAD_ROI_GROWTH_FACTOR / 2.0;
+    max.x += w * ARUCOHEAD_ROI_GROWTH_FACTOR / 2.0;
+    max.y += h * ARUCOHEAD_ROI_GROWTH_FACTOR / 2.0;
+
+    return cv::Rect2f(min, max);
+}
+
+bool arucohead_tracker::markers_disappeared(const std::vector<int> &expected, const std::vector<marker_detection_info> &detected) {
+    for (const int expected_id : expected) {
+        bool found = false;
+
+        for (const auto marker : detected) {
+            if (expected_id == marker.id) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+            return true;
+    }
+
+    return false;
 }
 
 /* Draw a bounding box around the head from dimensions defined in settings.
@@ -395,11 +501,9 @@ void arucohead_tracker::draw_head_bounding_box(cv::Mat &image)
 
 /* Draw a border around a marker given its vertices in image space.
 */
-void arucohead_tracker::draw_marker_border(cv::Mat &image, const std::vector<cv::Point2f> &image_points, int id)
+void arucohead_tracker::draw_marker_border(cv::Mat &image, const std::vector<cv::Point2f> &image_points, int id, const cv::Scalar &border_color)
 {
     const size_t vertex_count = image_points.size();
-
-    cv::Scalar border_color(0, 0, 255);
 
     cv::Point2f center(0, 0);
 
@@ -532,7 +636,24 @@ void arucohead_tracker::run() {
 
         /* Process the current frame.
         */
-        process_frame(frame_mat);
+        if (!process_frame(frame_mat, &last_roi))
+            process_frame(frame_mat);
+
+        /* Draw detected markers.
+        */
+        for (auto &marker : detected_markers) {
+            if (marker_highlight_set.count(marker.id) > 0)
+                draw_marker_border(frame_mat, marker.corners, marker.id, cv::Scalar(0, 0, 255));
+            else
+                draw_marker_border(frame_mat, marker.corners, marker.id, cv::Scalar(0, 0, 170));
+        }
+
+        /* Draw head bounding box and coordinate axes.
+        */
+        if (head.num_handles() > 0) {
+            draw_head_bounding_box(frame_mat);
+            draw_axes(frame_mat, head.rvec, head.tvec, circumference_to_radius(s.head_circumference_cm) * 1.5);
+        }
 
         /* Update and render FPS indicator.
         */
@@ -580,7 +701,12 @@ void arucohead_tracker::data(double *data)
 
 /* Tracker constructor.
 */
-arucohead_tracker::arucohead_tracker() : has_marker(false) {
+arucohead_tracker::arucohead_tracker() :
+    has_marker(false),
+    visited_angles(2.0 * CV_PI / ARUCOHEAD_ANGLE_COVERAGE_PITCH_STEPS, 2.0 * CV_PI / ARUCOHEAD_ANGLE_COVERAGE_YAW_STEPS),
+    last_roi(0, 0, std::numeric_limits<float>::max(), std::numeric_limits<float>::max()),
+    last_bin(std::numeric_limits<int>::max(), std::numeric_limits<int>::max())
+{
     opencv_init();
 }
 

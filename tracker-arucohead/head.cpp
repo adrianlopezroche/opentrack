@@ -21,6 +21,10 @@ namespace arucohead {
         return handles.at(id);
     }
 
+    size_t Head::num_handles() {
+        return handles.size();
+    }
+
     std::pair<cv::Vec3d, cv::Vec3d> Head::get_marker_local_transform(cv::Vec3d &rvec_measured, cv::Vec3d &tvec_measured, double xz_reference, double y_reference) {
         return arucohead::get_marker_local_transform(rvec_measured, tvec_measured, rvec, tvec, xz_reference, y_reference);
     }
@@ -43,5 +47,27 @@ namespace arucohead {
         pose_tvec = pose_tvec_mat.reshape(1, 1);
 
         return {pose_rvec, pose_tvec};
+    }
+
+    std::vector<int> Head::get_expected_visible_ids(double max_angle)
+    {
+        std::vector<int> visible;
+
+        cv::Mat R_head;
+        cv::Rodrigues(rvec, R_head);
+
+        for (const auto &handle : handles) {
+            cv::Mat R_handle;
+            cv::Rodrigues(handle.second.rvec_local.get(), R_handle);
+
+            cv::Mat R_composite = R_head * R_handle;
+
+            const double angle = get_marker_z_angle(R_composite);
+
+            if (angle <= max_angle)
+                visible.push_back(handle.second.id);
+        }
+
+        return visible;
     }
 }
