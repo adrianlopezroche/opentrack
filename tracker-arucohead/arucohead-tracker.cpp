@@ -623,8 +623,8 @@ void arucohead_tracker::run() {
         /* Apply zoom (as region of interest).
         */
         const double zoom = s.zoom / 100.0;
-        const int zoomed_width = frame_mat_temp.size().width / zoom;
-        const int zoomed_height = frame_mat_temp.size().height / zoom;
+        const int zoomed_width = std::max(frame_mat_temp.size().width / zoom, 1.0);
+        const int zoomed_height = std::max(frame_mat_temp.size().height / zoom, 1.0);
 
         cv::Mat frame_mat = frame_mat_temp(cv::Rect((frame_mat_temp.size().width - zoomed_width)/2, (frame_mat_temp.size().height - zoomed_height)/2, zoomed_width, zoomed_height));
 
