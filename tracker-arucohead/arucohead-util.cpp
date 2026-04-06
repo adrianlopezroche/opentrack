@@ -309,18 +309,15 @@ namespace arucohead {
     }
 
     double angle_between_rotations(const cv::Vec3d &v1, const cv::Vec3d &v2) {
-        cv::Mat R1;
+        cv::Mat R1, R2;
         cv::Rodrigues(v1, R1);
-
-        cv::Mat R2;
         cv::Rodrigues(v2, R2);
 
-        const auto q1 = rotation_matrix_to_quaternion(R1);
-        const auto q2 = rotation_matrix_to_quaternion(R2);
+        const cv::Mat R_diff = R1.t() * R2;
+        const double trace = R_diff.at<double>(0,0) + R_diff.at<double>(1,1) + R_diff.at<double>(2,2);
+        const double cos_angle = std::clamp((trace - 1.0) / 2.0, -1.0, 1.0);
 
-        const auto q_diff = quaternion_multiply(q2, cv::Vec4d(q1[0], -q1[1], -q1[2], -q1[3]));
-
-        return acos(std::min(fabs(q_diff[0]), 1.0)) * 2.0;
+        return acos(cos_angle);
     }
 
     bool marker_has_flipped(cv::Vec3d previous_rvec, cv::Vec3d &rvec) {
