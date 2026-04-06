@@ -30,7 +30,7 @@ struct arucohead_settings : public opts
     value<arucohead_dictionary> aruco_dictionary { b, "aruco_dictionary", arucohead_dictionary::ARUCOHEAD_DICT_ARUCO_MIP_36h12 };
     value<QString> camera_name { b, "camera_name", "" };
     value<int> zoom { b, "zoom", 100 };
-    value<int> fov { b, "fov", 60 };
+    value<int> fov { b, "fov", 56 };
     value<int> marker_min_angle { b, "marker_min_angle", 15 };
     value<int> marker_max_angle { b, "marker_max_angle", 55 };
 
