@@ -347,6 +347,12 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2f *roi)
                     } else if (pose_rvecs.size() > 1) {
                         auto &handle = head.get_handle(id);
 
+                        if (!handle.rvec_local.outliers_removed() && handle.rvec_local.sample_count() == handle.rvec_local.get_max_sample_count())
+                            handle.rvec_local.remove_outliers();
+
+                        if (!handle.tvec_local.outliers_removed() && handle.tvec_local.sample_count() == handle.tvec_local.get_max_sample_count())
+                            handle.tvec_local.remove_outliers();
+
                         if (handle.rvec_local.sample_count() < handle.rvec_local.get_max_sample_count()) {
                             const auto pose_rvec = average_rotation(pose_rvecs, id);
                             const auto pose_tvec = average_translation(pose_tvecs, id);
