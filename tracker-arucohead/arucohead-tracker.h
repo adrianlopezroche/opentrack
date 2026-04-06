@@ -51,7 +51,7 @@ private:
     std::unordered_set<int> marker_highlight_set;
     arucohead::AngleCoverageTracker visited_angles;
     arucohead::AngleCoverageBin last_bin;
-    settings s;
+    arucohead_settings s;
     std::unique_ptr<cv_video_widget> videoWidget;
     std::unique_ptr<QHBoxLayout> layout;
     Timer fps_timer;

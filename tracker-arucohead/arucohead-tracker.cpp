@@ -724,10 +724,6 @@ arucohead_tracker::~arucohead_tracker() {
     portable::sleep(1000);
 }
 
-/* Settings constructor.
-*/
-settings::settings() : opts("arucohead-tracker") {};
-
 /* Tracker declaration.
 */
 OPENTRACK_DECLARE_TRACKER(arucohead_tracker, arucohead_dialog, arucohead_metadata)
