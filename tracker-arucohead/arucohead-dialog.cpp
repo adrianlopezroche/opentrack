@@ -10,6 +10,7 @@
 #include "api/plugin-api.hpp"
 #include <opencv2/objdetect.hpp>
 #include <QPushButton>
+#include <sstream>
 
 arucohead_dialog::arucohead_dialog() : // NOLINT(cppcoreguidelines-pro-type-member-init)
     tracker(nullptr)
@@ -43,16 +44,24 @@ arucohead_dialog::arucohead_dialog() : // NOLINT(cppcoreguidelines-pro-type-memb
     connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(doCancel()));
     connect(ui.btnHelp, SIGNAL(clicked()), this, SLOT(doShowHelp()));
     connect(ui.btnCameraSettings, SIGNAL(clicked()), this, SLOT(doOpenCameraSettings()));
+    connect(&timer, &QTimer::timeout, this, &arucohead_dialog::doUpdateStatus);
+
+    timer.setInterval(250);
+    doUpdateStatus();
 }
 
 void arucohead_dialog::register_tracker(ITracker* x)
 {
     tracker = static_cast<arucohead_tracker*>(x);
+    doUpdateStatus();
+    timer.start();
 }
 
 void arucohead_dialog::unregister_tracker()
 {
     tracker = nullptr;
+    doUpdateStatus();
+    timer.stop();
 }
 
 void arucohead_dialog::set_buttons_visible(bool x)
@@ -97,4 +106,40 @@ void arucohead_dialog::save()
 void arucohead_dialog::reload()
 {
     s.b->reload();
+}
+
+void arucohead_dialog::doUpdateStatus()
+{
+    if (tracker == nullptr)
+        setStatusLabel(tracker_status::STOPPED);
+    else if (!tracker->tracking_started())
+        setStatusLabel(tracker_status::STARTING);
+    else if (tracker->restart_required())
+        setStatusLabel(tracker_status::RESTART_REQUIRED);
+    else
+        setStatusLabel(tracker_status::RUNNING);
+}
+
+void arucohead_dialog::setStatusLabel(tracker_status status)
+{
+    std::stringstream ss;
+
+    ss << "Tracker status: ";
+
+    switch (status) {
+        case tracker_status::STOPPED:
+            ss << "Not started";
+            break;
+        case tracker_status::STARTING:
+            ss << "Starting";
+            break;
+        case tracker_status::RUNNING:
+            ss << "Running";
+            break;
+        case tracker_status::RESTART_REQUIRED:
+            ss << "Restart required for some changes to take effect";
+            break;
+    }
+
+    ui.lblStatus->setText(ss.str().c_str());
 }

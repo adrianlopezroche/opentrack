@@ -29,6 +29,8 @@ public:
     module_status start_tracker(QFrame *) override;
     void data(double *data) override;
     void run() override;
+    bool tracking_started() const;
+    bool restart_required() const;
 
 private:
     struct marker_detection_info {
@@ -52,12 +54,14 @@ private:
     arucohead::AngleCoverageTracker visited_angles;
     arucohead::AngleCoverageBin last_bin;
     arucohead_settings s;
+    arucohead_static_settings static_settings;
     std::unique_ptr<cv_video_widget> videoWidget;
     std::unique_ptr<QHBoxLayout> layout;
     Timer fps_timer;
     double fps = 0;
     QMutex camera_mtx;
     QMutex data_mtx;
+    bool started_;
 
     bool open_camera();
     bool process_frame(cv::Mat& frame, const cv::Rect2f *roi = nullptr);

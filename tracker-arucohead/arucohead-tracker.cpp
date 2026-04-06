@@ -29,9 +29,9 @@ bool arucohead_tracker::open_camera()
 
     /* Create camera object.
     */
-    QString camera_name = s.camera_name;
+    QString camera_name = static_settings.camera_name;
 
-    if (s.camera_name == "")
+    if (static_settings.camera_name == "")
         camera_name = video::camera_names()[0];
 
     camera = video::make_camera(camera_name);
@@ -41,10 +41,10 @@ bool arucohead_tracker::open_camera()
     /* Start camera.
     */
     video::impl::camera::info args {};
-    args.width = s.frame_width;
-    args.height = s.frame_height;
-    args.fps = s.fps;
-    args.use_mjpeg = s.use_mjpeg;
+    args.width = static_settings.frame_width;
+    args.height = static_settings.frame_height;
+    args.fps = static_settings.fps;
+    args.use_mjpeg = static_settings.use_mjpeg;
 
     if (!camera->start(args)) {
         qDebug() << "ArUcoHead: could not open camera.";
@@ -76,7 +76,7 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2f *roi)
 
     /* Marker corners (in object space).
     */
-    const double marker_size_cm = s.aruco_marker_size_mm / 10.0;
+    const double marker_size_cm = static_settings.aruco_marker_size_mm / 10.0;
 
     const cv::Mat objectPoints = (cv::Mat_<double>(4, 3) <<
         -marker_size_cm / 2.0,  marker_size_cm / 2.0, 0.0,
@@ -571,6 +571,13 @@ void arucohead_tracker::update_fps()
 */
 module_status arucohead_tracker::start_tracker(QFrame *videoframe)
 {
+    static_settings.frame_width = s.frame_width;
+    static_settings.frame_height = s.frame_height;
+    static_settings.fps = s.fps;
+    static_settings.use_mjpeg = s.use_mjpeg;
+    static_settings.camera_name = s.camera_name;
+    static_settings.aruco_marker_size_mm = s.aruco_marker_size_mm;
+
     videoframe->show();
 
     videoWidget = std::make_unique<cv_video_widget>(videoframe);
@@ -598,6 +605,8 @@ void arucohead_tracker::run() {
         return;
 
     update_fps();
+
+    started_ = true;
     
     /* Update loop.
     */
@@ -682,6 +691,22 @@ void arucohead_tracker::run() {
     }
 }
 
+bool arucohead_tracker::tracking_started() const
+{
+    return started_;
+}
+
+bool arucohead_tracker::restart_required() const
+{
+    return
+        static_settings.frame_width != s.frame_width ||
+        static_settings.frame_height != s.frame_height ||
+        static_settings.fps != s.fps ||
+        static_settings.use_mjpeg != s.use_mjpeg ||
+        static_settings.camera_name != s.camera_name ||
+        static_settings.aruco_marker_size_mm != s.aruco_marker_size_mm;
+}
+
 /* Supply position and orientation data.
 */
 void arucohead_tracker::data(double *data)
@@ -711,7 +736,8 @@ arucohead_tracker::arucohead_tracker() :
     has_marker(false),
     visited_angles(2.0 * CV_PI / ARUCOHEAD_ANGLE_COVERAGE_PITCH_STEPS, 2.0 * CV_PI / ARUCOHEAD_ANGLE_COVERAGE_YAW_STEPS),
     last_roi(0, 0, std::numeric_limits<float>::max(), std::numeric_limits<float>::max()),
-    last_bin(std::numeric_limits<int>::max(), std::numeric_limits<int>::max())
+    last_bin(std::numeric_limits<int>::max(), std::numeric_limits<int>::max()),
+    started_(false)
 {
     opencv_init();
 }

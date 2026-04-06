@@ -36,3 +36,13 @@ struct arucohead_settings : public opts
 
     arucohead_settings();
 };
+
+struct arucohead_static_settings
+{
+    int frame_width;
+    int frame_height;
+    int fps;
+    bool use_mjpeg;
+    QString camera_name;
+    int aruco_marker_size_mm;
+};

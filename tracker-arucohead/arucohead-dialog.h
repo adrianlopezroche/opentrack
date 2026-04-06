@@ -9,6 +9,7 @@
 #include "ui_arucohead.h"
 #include "arucohead-settings.h"
 #include "api/plugin-api.hpp"
+#include <QTimer>
 
 class arucohead_tracker;
 
@@ -25,12 +26,22 @@ public:
     void save() override;
     void reload() override;
 private:
+    enum tracker_status {
+        STOPPED,
+        STARTING,
+        RUNNING,
+        RESTART_REQUIRED
+    };
+
     arucohead_settings s;
     Ui::arucohead_dialog ui;
     arucohead_tracker *tracker;
+    QTimer timer;
 private slots:
     void doOK();
     void doCancel();
     void doOpenCameraSettings();
     void doShowHelp();
+    void doUpdateStatus();
+    void setStatusLabel(tracker_status status);
 };
