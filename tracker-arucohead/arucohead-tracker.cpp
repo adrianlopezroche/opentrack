@@ -177,7 +177,7 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2f *roi)
         std::vector<cv::Vec3d> tvecs;
         std::vector<double> reprojection_errors;
 
-        if (cv::solvePnPGeneric(objectPoints, detected_markers[i].corners, camera_matrix, dist_coeffs, rvecs, tvecs, false, cv::SOLVEPNP_IPPE, cv::noArray(), cv::noArray(), reprojection_errors)) {
+        if (cv::solvePnPGeneric(objectPoints, detected_markers[i].corners, camera_matrix, dist_coeffs, rvecs, tvecs, false, cv::SOLVEPNP_IPPE_SQUARE, cv::noArray(), cv::noArray(), reprojection_errors)) {
             const int id = detected_markers[i].id;
 
             /* Choose the best solution among the two candidates. */
