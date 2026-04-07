@@ -87,11 +87,24 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2f *roi)
 
     /* Create ROI image.
     */
+    cv::Rect2f roi_copy;
     cv::Mat image;
 
     if (roi) {
-        if (roi->width > 0 && roi->height > 0) {
-            image = frame(*roi & cv::Rect2f(0, 0, frame.cols, frame.rows));
+        roi_copy = *roi;
+
+        if (roi->width > 0 && roi->height > 0)
+        {
+            auto intersection = *roi & cv::Rect2f(0, 0, frame.cols, frame.rows);
+
+            if (intersection.width > 0 && intersection.height > 0) {
+                image = frame(intersection);
+                roi_copy = intersection;
+                roi = &roi_copy;
+            } else {
+                image = frame;
+                roi = nullptr;
+            }
         } else {
             image = frame;
             roi = nullptr;
