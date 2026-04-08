@@ -21,4 +21,6 @@ public:
 
 private:
     Ui::ArUcoheadHelpDialog *ui;
+    void loadHelpText(const QString &filePath);
+    QString removeSpaces(QString &input);
 };
