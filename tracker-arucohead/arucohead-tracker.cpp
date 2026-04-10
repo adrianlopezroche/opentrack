@@ -56,7 +56,7 @@ bool arucohead_tracker::open_camera()
 
 /* Detect markers, update head pose, and draw AR elements.
 */
-bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2f *roi)
+bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 {
     /* Pose vectors for each detected marker.
     */
@@ -87,7 +87,7 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2f *roi)
 
     /* Create ROI image.
     */
-    cv::Rect2f roi_copy;
+    cv::Rect2i roi_copy;
     cv::Mat image;
 
     if (roi) {
@@ -95,7 +95,7 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2f *roi)
 
         if (roi->width > 0 && roi->height > 0)
         {
-            auto intersection = *roi & cv::Rect2f(0, 0, frame.cols, frame.rows);
+            auto intersection = *roi & cv::Rect2i(0, 0, frame.cols, frame.rows);
 
             if (intersection.width > 0 && intersection.height > 0) {
                 image = frame(intersection);

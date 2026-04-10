@@ -46,7 +46,7 @@ private:
     std::unique_ptr<video::impl::camera> camera;
     cv::Mat camera_matrix;
     std::vector<double> dist_coeffs;
-    cv::Rect2f last_roi;
+    cv::Rect2i last_roi;
     bool has_marker;
     std::unordered_map<int, cv::Vec3d> previous_marker_rvecs;
     std::vector<marker_detection_info> detected_markers;
@@ -64,7 +64,7 @@ private:
     bool started_;
 
     bool open_camera();
-    bool process_frame(cv::Mat& frame, const cv::Rect2f *roi = nullptr);
+    bool process_frame(cv::Mat& frame, const cv::Rect2i *roi = nullptr);
     cv::Mat build_camera_matrix(int image_width, int image_height, double diagonal_fov);
     cv::Rect2f get_marker_detected_region(const std::vector<marker_detection_info> &markers);
     bool markers_disappeared(const std::vector<int> &expected, const std::vector<marker_detection_info> &detected);
