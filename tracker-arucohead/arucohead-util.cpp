@@ -319,8 +319,4 @@ namespace arucohead {
 
         return acos(cos_angle);
     }
-
-    bool marker_has_flipped(cv::Vec3d previous_rvec, cv::Vec3d &rvec) {
-        return angle_between_rotations(rvec, previous_rvec) > CV_PI / 180.0 * ARUCOHEAD_MARKER_FLIP_DETECTION_THRESHOLD;
-    }
 }

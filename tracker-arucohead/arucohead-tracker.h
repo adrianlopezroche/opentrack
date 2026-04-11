@@ -48,7 +48,6 @@ private:
     std::vector<double> dist_coeffs;
     cv::Rect2i last_roi;
     bool has_marker;
-    std::unordered_map<int, cv::Vec3d> previous_marker_rvecs;
     std::vector<marker_detection_info> detected_markers;
     std::unordered_set<int> marker_highlight_set;
     arucohead::AngleCoverageTracker visited_angles;

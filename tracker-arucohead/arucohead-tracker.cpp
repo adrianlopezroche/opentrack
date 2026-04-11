@@ -70,7 +70,6 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 
     /* Marker reliability metrics.
     */
-    std::unordered_map<int, double> marker_error_ratios;
     std::unordered_map<int, double> marker_z_angles;
     std::unordered_set<int> excluded_markers;
 
@@ -187,44 +186,19 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 
             const int solution_index = error0 <= error1 ? 0 : 1;
 
-            /* Detect and correct for sudden flips in a marker orientation when pose solutions are ambiguous.
-            */
-            if (error_ratio < ARUCOHEAD_MARKER_REPROJECTION_ERROR_THRESHOLD) {
-                // We have a good pose, so use it (or else we might get stuck on a wrong solution).
-                marker_rvecs[id] = rvecs[solution_index];
-                marker_tvecs[id] = tvecs[solution_index];
-            } else if (previous_marker_rvecs.count(id) != 0 && marker_has_flipped(previous_marker_rvecs[id], rvecs[solution_index])) {
-                // Marker flip detected, so correct it by choosing the pose closest to the previous one.
-                if (angle_between_rotations(previous_marker_rvecs[id], rvecs[0]) < angle_between_rotations(previous_marker_rvecs[id], rvecs[1])) {
-                    marker_rvecs[id] = rvecs[0];
-                    marker_tvecs[id] = tvecs[0];
-                } else {
-                    marker_rvecs[id] = rvecs[1];
-                    marker_tvecs[id] = tvecs[1];
-                }
-            } else {
-                // No flip, so use pose with the least reprojection error even if not ideal.
-                marker_rvecs[id] = rvecs[solution_index];
-                marker_tvecs[id] = tvecs[solution_index];
-            }
-
-            /* Collect reliability metrics.
-            */
-            marker_error_ratios[id] = error_ratio;
-            marker_z_angles[id] = get_marker_z_angle(marker_rvecs[id]);
+            marker_rvecs[id] = rvecs[solution_index];
+            marker_tvecs[id] = tvecs[solution_index];
 
             /* Exclude markers that are too ambiguous, too close to head-on, or too oblique.
             */
+            marker_z_angles[id] = get_marker_z_angle(marker_rvecs[id]);
+
             if (error_ratio > ARUCOHEAD_MARKER_EXCLUSION_AMBIGUITY_THRESHOLD ||
                 marker_z_angles[id] < CV_PI / 180.0 * s.marker_min_angle ||
                 marker_z_angles[id] > CV_PI / 180.0 * s.marker_max_angle)
             {
                 excluded_markers.insert(id);
             }
-
-            /* Save current marker rvec for next frame.
-            */
-            previous_marker_rvecs[id] = marker_rvecs[id];
         }
     }
 

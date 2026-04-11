@@ -30,5 +30,4 @@ namespace arucohead {
     double get_marker_z_angle(const cv::Mat &R);
     double get_marker_z_angle(const cv::Vec3d &rvec);
     double angle_between_rotations(const cv::Vec3d &rvec1, const cv::Vec3d &rvec2);
-    bool marker_has_flipped(cv::Vec3d previous_rvec, cv::Vec3d& rvec);
 }
