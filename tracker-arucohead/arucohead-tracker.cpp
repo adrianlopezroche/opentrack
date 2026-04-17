@@ -192,7 +192,7 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 
     const size_t excluded_marker_count = excluded_markers.size();
 
-    if (excluded_marker_count > 0) {
+    if (has_marker && excluded_marker_count > 0) {
         if (excluded_marker_count < detected_markers.size()) {
             /* Keep only reliable markers.
             */
@@ -233,45 +233,35 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
             marker_highlight_set.insert(marker.id);
     }
 
-    /* Find first marker if none has yet been detected.
+    /* Find key marker if it has not yet been detected.
     */
     if (!has_marker) {
         if (!selected_markers.empty()) {
-            double best_marker_x = circumference_to_radius(s.head_circumference_cm) * 2;
-            double best_marker_z = 0;
-            cv::Vec3d best_marker_rvec;
-            cv::Vec3d best_marker_tvec;
-            int best_marker_id = 0;
-
             for (size_t i = 0; i < selected_markers.size(); ++i) {
                 const int id = selected_markers[i].id;
+
+                if (id != s.first_marker_id)
+                    continue;
 
                 if (marker_rvecs.count(id) > 0) {
                     auto v = get_xz_direction_vector(marker_rvecs[id]);
                     auto c = circle_edge_intersection(circumference_to_radius(s.head_circumference_cm), v);
 
-                    if (cv::abs(c[0]) < cv::abs(best_marker_x)) {
-                        has_marker = true;
-                        best_marker_x = c[0];
-                        best_marker_z = c[1];
-                        best_marker_rvec = marker_rvecs[id];
-                        best_marker_tvec = marker_tvecs[id];
-                        best_marker_id = id;
-                    }
+                    c[0] *= static_settings.cephalic_index / 100.0;
+
+                    cv::Vec3d reference_rvec(CV_PI, 0, 0);
+
+                    cv::Vec3d reference_tvec = marker_tvecs[id];
+                    reference_tvec[0] += c[0];
+                    reference_tvec[1] += s.marker_height_cm;
+                    reference_tvec[2] += c[1];
+
+                    auto [rvec_local, tvec_local] = get_marker_local_transform(marker_rvecs[id], marker_tvecs[id], reference_rvec, reference_tvec, circumference_to_radius(s.head_circumference_cm), s.marker_height_cm);
+
+                    head.set_handle(Marker(id, MeanVector(rvec_local, MeanVector::VectorType::ROTATION), MeanVector(tvec_local, MeanVector::VectorType::POLAR)));
+
+                    has_marker = true;
                 }
-            }
-
-            if (has_marker) {
-                cv::Vec3d reference_rvec(CV_PI, 0, 0);
-
-                cv::Vec3d reference_tvec = best_marker_tvec;
-                reference_tvec[0] += best_marker_x;
-                reference_tvec[1] += s.marker_height_cm;
-                reference_tvec[2] += best_marker_z;
-
-                auto [rvec_local, tvec_local] = get_marker_local_transform(best_marker_rvec, best_marker_tvec, reference_rvec, reference_tvec, circumference_to_radius(s.head_circumference_cm), s.marker_height_cm);
-
-                head.set_handle(Marker(best_marker_id, MeanVector(rvec_local, MeanVector::VectorType::ROTATION), MeanVector(tvec_local, MeanVector::VectorType::POLAR)));
             }
         }
     }
@@ -547,6 +537,9 @@ module_status arucohead_tracker::start_tracker(QFrame *videoframe)
     static_settings.camera_name = s.camera_name;
     static_settings.aruco_marker_size_mm = s.aruco_marker_size_mm;
 
+    const double cephalic_index { s.cephalic_index };
+    static_settings.cephalic_index = cephalic_index;
+
     videoframe->show();
 
     videoWidget = std::make_unique<cv_video_widget>(videoframe);
@@ -667,13 +660,16 @@ bool arucohead_tracker::tracking_started() const
 
 bool arucohead_tracker::restart_required() const
 {
+    const double cephalic_index { s.cephalic_index };
+
     return
         static_settings.frame_width != s.frame_width ||
         static_settings.frame_height != s.frame_height ||
         static_settings.fps != s.fps ||
         static_settings.use_mjpeg != s.use_mjpeg ||
         static_settings.camera_name != s.camera_name ||
-        static_settings.aruco_marker_size_mm != s.aruco_marker_size_mm;
+        static_settings.aruco_marker_size_mm != s.aruco_marker_size_mm ||
+        static_settings.cephalic_index != cephalic_index;
 }
 
 /* Supply position and orientation data.

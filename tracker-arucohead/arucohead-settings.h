@@ -27,6 +27,7 @@ struct arucohead_settings : public opts
     value<int> first_marker_id { b, "first_marker_id", 1 };
     value<double> head_circumference_cm { b, "head_circumference_cm", 60 };
     value<double> marker_height_cm { b, "marker_height_cm", 20 };
+    value<slider_value> cephalic_index{ b, "cephalic_index", slider_value(75, 50, 100) };
     value<arucohead_dictionary> aruco_dictionary { b, "aruco_dictionary", arucohead_dictionary::ARUCOHEAD_DICT_ARUCO_MIP_36h12 };
     value<QString> camera_name { b, "camera_name", "" };
     value<int> zoom { b, "zoom", 100 };
@@ -45,4 +46,5 @@ struct arucohead_static_settings
     bool use_mjpeg;
     QString camera_name;
     int aruco_marker_size_mm;
+    double cephalic_index;
 };

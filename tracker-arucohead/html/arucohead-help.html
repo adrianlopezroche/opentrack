@@ -11,11 +11,13 @@
             td { padding-left:2em; }
         </style>
     </head>
-    <body><h1>ArUcoHead Paper Marker Tracker</h1>
+    <body>
+        <h1>ArUcoHead Paper Marker Tracker</h1>
         <p>ArUcoHead is a paper marker tracking system that uses a simplified head model for pose estimation. Instead of using markers for direct positioning, it uses markers as spatial guides to determine the head model's position and orientation. Multiple markers can be used together for improved accuracy and a broader range of motion.</p>
         <p>ArUcoHead is compatible with <i>ArUco MIP 36h12</i>, <i>AprilTag 36h11</i>, and <i>Original ArUco</i> marker dictionaries.</p>
 
-        <h1>Camera</h1>
+        <h1>Settings</h1>
+        <h2>Camera</h2>
         <p><b>Camera Name</b>: Select your camera from the dropdown menu.</p>
         <p><b>Width and Height</b>: Enter a resolution supported by your camera. Common resolutions include:</p>
         <p>
@@ -98,10 +100,11 @@
         <p><b>Preferred marker angle (maximum)</b>: When using multiple markers, prioritize markers whose angle relative to the camera is less than this value. This may help reduce the jitter that can be observed when some of the markers are angled away from the camera, especially at lower resolutions or when marker borders are small. If no detected markers meet this requirement the tracker will choose among the best available markers instead. The default is 55°.</p>
         <p>To include all angles set the minimum angle to 0° and the maximum to 90°.</p>
 
-        <h2>Head</h2>
+        <h2>Head / Hat</h2>
         <p>These measurements help the software translate marker movement into accurate head rotation.</p>
         <p><b>Head circumference</b>: Measure around your head at the exact level where the markers are positioned.</p>
         <p><b>Jawline to marker distance</b>: Measure vertically from your jawline to the marker level, used to determine the pivot point for head rotation.</p>
+        <p><b>Roundness</b>: Defines your head or hat shape as seen from above. Increase this value for a rounder profile, or lower it for a more oval profile. Adjust this if the detection box looks off-center during tracking. Marker configurations that don't have a central marker are especially sensitive to this.</p>
 
         <h1>Troubleshooting</h1>
         <p>If the tracking is too jittery you can try the following:</p>
