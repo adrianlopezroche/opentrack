@@ -6,12 +6,12 @@
  */
 #include "arucohead-tracker.h"
 #include "arucohead-util.h"
+#include "marker-detect.h"
 #include "api/plugin-api.hpp"
 #include "cv/init.hpp"
 #include "compat/sleep.hpp"
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
-#include "aruco_nano.h"
 #include "config.h"
 #include <unordered_map>
 #include <unordered_set>
@@ -116,35 +116,17 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
     */
     detected_markers.clear();
 
-    if (s.aruco_dictionary == arucohead_dictionary::ARUCOHEAD_DICT_ARUCO_ORIGINAL) {
-        /* Use OpenTrack's ArUco fork for original ArUco dictionary.
-        */
-        std::vector<aruco::Marker> markers;
-        detector.detect(image, markers, cv::Mat(), cv::Mat(), -1, false);
+    std::vector<aruco::Marker> markers;
+    detector.detect(image, markers, cv::Mat(), cv::Mat(), -1, false);
 
-        const int min_marker_id = s.first_marker_id;
-        const int max_marker_id = s.first_marker_id + s.number_of_markers - 1;
+    const int min_marker_id = s.first_marker_id;
+    const int max_marker_id = s.first_marker_id + s.number_of_markers - 1;
 
-        for (const auto &marker : markers) {
-            if (marker.id < min_marker_id || marker.id > max_marker_id)
-                continue;
+    for (const auto &marker : markers) {
+        if (marker.id < min_marker_id || marker.id > max_marker_id)
+            continue;
 
-            detected_markers.push_back(marker_detection_info(marker.id, marker));
-        }
-    } else {
-        /* Use ArUco Nano for MIP 36h12 and AprilTag 36h11 dictionaries.
-        */
-        auto markers = aruconano::MarkerDetector::detect(image, 10U, s.aruco_dictionary == arucohead_dictionary::ARUCOHEAD_DICT_ARUCO_MIP_36h12 ? aruconano::MarkerDetector::ARUCO_MIP_36h12 : aruconano::MarkerDetector::APRILTAG_36h11);
-
-        const int min_marker_id = s.first_marker_id;
-        const int max_marker_id = s.first_marker_id + s.number_of_markers - 1;
-
-        for (const auto &marker : markers) {
-            if (marker.id < min_marker_id || marker.id > max_marker_id)
-                continue;
-
-            detected_markers.push_back(marker_detection_info(marker.id, marker));
-        }
+        detected_markers.push_back(marker_detection_info(marker.id, marker));
     }
 
     /* Express corners in terms of original frame, if necessary.
@@ -727,6 +709,16 @@ arucohead_tracker::arucohead_tracker() :
     started_(false)
 {
     opencv_init();
+
+    switch (s.aruco_dictionary) {
+        case ARUCOHEAD_DICT_ARUCO_MIP_36h12:
+            detector.setMakerDetectorFunction(detect_aruco_mip_36h12);
+            break;
+
+        case ARUCOHEAD_DICT_APRILTAG_36h11:
+            detector.setMakerDetectorFunction(detect_apriltag_36h11);
+            break;
+    }
 }
 
 /* Tracker destructor.
