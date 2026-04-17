@@ -47,4 +47,5 @@ struct arucohead_static_settings
     QString camera_name;
     int aruco_marker_size_mm;
     double cephalic_index;
+    arucohead_dictionary aruco_dictionary;
 };
