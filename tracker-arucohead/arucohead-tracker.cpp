@@ -707,7 +707,7 @@ void arucohead_tracker::run() {
         update_fps();
 
         std::stringstream ss;
-        ss << "Hz: " << int(fps);
+        ss << frame.width << "x" << frame.height << " @ " << int(fps) << "Hz";
 
         const double line_thickness = std::max(frame_mat.cols * ARUCOHEAD_LINE_THICKNESS_FRAME_SCALING_FACTOR, 1.0);
         const double font_scale = line_thickness * 0.5;
