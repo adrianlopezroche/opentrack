@@ -89,6 +89,9 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
     cv::Rect2i roi_copy;
     cv::Mat image;
 
+    if (!has_key_marker)
+        roi = nullptr;
+
     if (roi) {
         roi_copy = *roi;
 
@@ -192,7 +195,7 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 
     const size_t excluded_marker_count = excluded_markers.size();
 
-    if (has_marker && excluded_marker_count > 0) {
+    if (has_key_marker && excluded_marker_count > 0) {
         if (excluded_marker_count < detected_markers.size()) {
             /* Keep only reliable markers.
             */
@@ -235,7 +238,7 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 
     /* Find key marker if it has not yet been detected.
     */
-    if (!has_marker) {
+    if (!has_key_marker) {
         if (!selected_markers.empty()) {
             for (size_t i = 0; i < selected_markers.size(); ++i) {
                 const int id = selected_markers[i].id;
@@ -260,13 +263,13 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 
                     head.set_handle(Marker(id, MeanVector(rvec_local, MeanVector::VectorType::ROTATION), MeanVector(tvec_local, MeanVector::VectorType::POLAR)));
 
-                    has_marker = true;
+                    has_key_marker = true;
                 }
             }
         }
     }
     
-    if (has_marker && !selected_markers.empty()) {
+    if (has_key_marker && !selected_markers.empty()) {
         /* Compute poses for known markers.
         */
         for (size_t i = 0; i < selected_markers.size(); ++i) {
@@ -766,7 +769,7 @@ void arucohead_tracker::data(double *data)
 /* Tracker constructor.
 */
 arucohead_tracker::arucohead_tracker() :
-    has_marker(false),
+    has_key_marker(false),
     visited_angles(2.0 * CV_PI / ARUCOHEAD_ANGLE_COVERAGE_PITCH_STEPS, 2.0 * CV_PI / ARUCOHEAD_ANGLE_COVERAGE_YAW_STEPS),
     last_roi(0, 0, std::numeric_limits<float>::max(), std::numeric_limits<float>::max()),
     last_bin(std::numeric_limits<int>::max(), std::numeric_limits<int>::max()),

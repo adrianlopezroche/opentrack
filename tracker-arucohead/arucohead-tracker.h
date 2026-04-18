@@ -47,7 +47,7 @@ private:
     cv::Mat camera_matrix;
     std::vector<double> dist_coeffs;
     cv::Rect2i last_roi;
-    bool has_marker;
+    bool has_key_marker;
     std::vector<marker_detection_info> detected_markers;
     std::unordered_set<int> marker_highlight_set;
     arucohead::AngleCoverageTracker visited_angles;
