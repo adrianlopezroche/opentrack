@@ -57,13 +57,19 @@ private:
     std::unique_ptr<cv_video_widget> videoWidget;
     std::unique_ptr<QHBoxLayout> layout;
     Timer fps_timer;
+    Timer last_detection_timer;
     double fps = 0;
+    double no_detection_timeout = 0;
     QMutex camera_mtx;
     QMutex data_mtx;
     bool started_;
+    bool use_fixed_threshold;
+    unsigned int adaptive_size_pos;
 
     bool open_camera();
     bool process_frame(cv::Mat& frame, const cv::Rect2i *roi = nullptr);
+    void cycle_threshold_params();
+    void set_threshold_params();
     cv::Mat build_camera_matrix(int image_width, int image_height, double diagonal_fov);
     cv::Rect2f get_marker_detected_region(const std::vector<marker_detection_info> &markers);
     bool markers_disappeared(const std::vector<int> &expected, const std::vector<marker_detection_info> &detected);

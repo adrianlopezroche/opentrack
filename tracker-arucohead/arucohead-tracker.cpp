@@ -142,12 +142,12 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 
     /* If no markers detected and ROI is not null, signal need to reset ROI.
     */
-    bool reset_roi;
+    bool detection_failed;
 
     if (detected_markers.size() == 0 && roi != nullptr)
         return false;
     else
-        reset_roi = false;
+        detection_failed = false;
 
     last_roi = get_marker_detected_region(detected_markers);
 
@@ -340,19 +340,59 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
         if (roi == nullptr && visited_angles.get_visit_count(bin) < ARUCOHEAD_ANGLE_COVERAGE_VISIT_THRESHOLD)
             visited_angles.add_visit(bin);
 
-        if (roi != nullptr) {
-            if (head.num_handles() < s.number_of_markers && visited_angles.get_visit_count(bin) < ARUCOHEAD_ANGLE_COVERAGE_VISIT_THRESHOLD) {
-                reset_roi = true;
-            } else {
-                auto expected_ids = head.get_expected_visible_ids(CV_PI / 180.0 * s.marker_max_angle);
+        if (head.num_handles() < s.number_of_markers && visited_angles.get_visit_count(bin) < ARUCOHEAD_ANGLE_COVERAGE_VISIT_THRESHOLD) {
+            detection_failed = true;
+        } else {
+            auto expected_ids = head.get_expected_visible_ids(CV_PI / 180.0 * s.marker_max_angle);
 
-                if (markers_disappeared(expected_ids, detected_markers))
-                    reset_roi = true;
-            }
+            if (markers_disappeared(expected_ids, detected_markers))
+                detection_failed = true;
         }
     }
 
-    return !reset_roi;
+    return !detection_failed;
+}
+
+static const int adaptive_threshold_sizes[] =
+{
+    5,
+    7,
+    9,
+    11
+};
+
+/* Cycle through thresholding parameters. Adapted from ftnoir_tracker_aruco.cpp.
+*/
+void arucohead_tracker::cycle_threshold_params()
+{
+    if (!use_fixed_threshold) {
+        use_fixed_threshold = true;
+    } else {
+        use_fixed_threshold = false;
+
+        adaptive_size_pos++;
+        adaptive_size_pos %= std::size(adaptive_threshold_sizes);
+    }
+
+    set_threshold_params();
+
+    qDebug() << "aruco: switched thresholding params"
+             << "fixed:" << use_fixed_threshold
+             << "size:" << adaptive_threshold_sizes[adaptive_size_pos];
+}
+
+/* Update detector thresholding parameters. Adapted from ftnoir_tracker_aruco.cpp.
+*/
+void arucohead_tracker::set_threshold_params()
+{
+    detector.setDesiredSpeed(3);
+
+    if (use_fixed_threshold)
+        detector._thresMethod = aruco::MarkerDetector::FIXED_THRES;
+    else
+        detector._thresMethod = aruco::MarkerDetector::ADPT_THRES;
+
+    detector.setThresholdParams(adaptive_threshold_sizes[adaptive_size_pos], ARUCOHEAD_ADAPTIVE_THRESHOLD_C);
 }
 
 /* Generate a camera matrix for the given image dimension and field of view (in radians).
@@ -579,6 +619,8 @@ void arucohead_tracker::run() {
 
     update_fps();
 
+    last_detection_timer.start();
+
     started_ = true;
     
     /* Update loop.
@@ -624,8 +666,22 @@ void arucohead_tracker::run() {
 
         /* Process the current frame.
         */
-        if (!process_frame(frame_mat, &last_roi))
-            process_frame(frame_mat);
+        bool detection_ok = process_frame(frame_mat, &last_roi) || process_frame(frame_mat);
+
+        if (detection_ok) {
+            no_detection_timeout -= last_detection_timer.elapsed_seconds() * ARUCOHEAD_NO_DETECTION_TIMEOUT_BACKOFF_C;
+            no_detection_timeout = std::fmax(0, no_detection_timeout);
+            last_detection_timer.start();
+        } else {
+            no_detection_timeout += last_detection_timer.elapsed_seconds();
+
+            last_detection_timer.start();
+
+            if (no_detection_timeout > ARUCOHEAD_NO_DETECTION_TIMEOUT) {
+                no_detection_timeout = 0;
+                cycle_threshold_params();
+            }
+        }
 
         /* Draw detected markers.
         */
@@ -714,9 +770,12 @@ arucohead_tracker::arucohead_tracker() :
     visited_angles(2.0 * CV_PI / ARUCOHEAD_ANGLE_COVERAGE_PITCH_STEPS, 2.0 * CV_PI / ARUCOHEAD_ANGLE_COVERAGE_YAW_STEPS),
     last_roi(0, 0, std::numeric_limits<float>::max(), std::numeric_limits<float>::max()),
     last_bin(std::numeric_limits<int>::max(), std::numeric_limits<int>::max()),
-    started_(false)
+    started_(false),
+    use_fixed_threshold(false),
+    adaptive_size_pos(0)
 {
     opencv_init();
+    set_threshold_params();
 }
 
 /* Tracker destructor.
