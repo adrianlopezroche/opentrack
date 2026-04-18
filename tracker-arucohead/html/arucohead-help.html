@@ -16,6 +16,21 @@
         <p>ArUcoHead is a paper marker tracking system that uses a simplified head model for pose estimation. Instead of using markers for direct positioning, it uses markers as spatial guides to determine the head model's position and orientation. Multiple markers can be used together for improved accuracy and a broader range of motion.</p>
         <p>ArUcoHead is compatible with <i>ArUco MIP 36h12</i>, <i>AprilTag 36h11</i>, and <i>Original ArUco</i> marker dictionaries.</p>
 
+        <h1 id="markersetup">Marker Setup</h1>
+        <p>The simplest setup has a single marker centered on the forehead:</p>
+        <p style="text-align: center; margin-top: 32px;"><img src="qrc:/images/markers-single.png" /></p>
+        <p style="text-align: center; margin-bottom: 32px;"><i>Figure 1: Single marker, centered, as seen from the top.</i></p>
+        <p>You can add additional markers to either side:</p>
+        <p style="text-align: center; margin-top: 32px;"><img src="qrc:/images/markers-centered.png" /></p>
+        <p style="text-align: center; margin-bottom: 32px;"><i>Figure 2: Centered key marker with supplemental markers to either side.</i></p>
+        <p>You can also have have the markers offset instead of being centered:</p>
+        <p style="text-align: center; margin-top: 32px;"><img src="qrc:/images/markers-offset.png" /></p>
+        <p style="text-align: center; margin-bottom: 32px;"><i>Figure 3: Offset key marker with supplemental marker on opposite side.</i></p>
+        <p>Finally, supplemental markers can be angled away from the head, if desired, for better visibility. The key marker should be angled to follow the contour of the head or hat as in previous examples:</p>
+        <p style="text-align: center; margin-top: 32px;"><img src="qrc:/images/markers-angled.png" /></p>
+        <p style="text-align: center; margin-bottom: 32px;"><i>Figure 4: Centered key marker with supplemental markers angled away from the head.</i></p>
+        <p>The setups shown in Figures 3 and 4 should give the most stable poses. The setup shown in Figure 2 can be unstable at lower resolutions, and the setup in Figure 1 can be unstable when the marker is facing the camera head-on.</p>
+
         <h1>Settings</h1>
         <h2>Camera</h2>
         <p><b>Camera Name</b>: Select your camera from the dropdown menu.</p>
@@ -56,6 +71,7 @@
                 </tbody>
             </table>
         </p>
+        <p>A resolution of 640 x 480 or higher is recommended.</p>
         <p><b>FPS</b>: The video stream's frame rate. 30 Hz is the most common; more advanced cameras may support 60 Hz or higher (which may require enabling Use MJPEG, depending on the camera). Lower frame rates are also possible, but 30 Hz or above is recommended.</p>
         <p><b>Diagonal FOV</b>: The camera's diagonal field of view as specified by the manufacturer. Some manufacturers may provide the horizontal field of view instead, in which case the number must be converted to diagonalfor accurate tracking.</p>
         <p><b>Zoom</b>: Digitally zoom in toward the center of the video frame, cropping it to a smaller size. This can help eliminate background elements that interfere with detection and may also reduce the processing load.</p>
@@ -64,7 +80,7 @@
 
         <h2>ArUco</h2>
         <p>Markers can be generated and printed at <a href="https://chev.me/arucogen/">chev.me/arucogen/</a>. Use double-sided tape or a thin layer of glue stick to affix the printed markers to a rigid surface like cardboard or a 3D-printed plate, then mount them on a hat or head band. Start the tracker with your head facing forward, looking straight at the monitor. Avoid mounting the markers such that they're flat to the camera while in this position as pose detection is less reliable when markers are facing the camera straight-on.</p>
-        <p><b>Dictionary</b>: ArUcoHead supports the use of <i>ArUco MIP 36h12</i>, <i>AprilTag 36h11</i>, and <i>Original ArUco</i> markers. ArUco MIP 36h12 and AprilTag 36h11 offer the best reliability — more accurate ID detection with fewer false positives — while Original ArUco may be slightly faster.</p>
+        <p><b>Dictionary</b>: ArUcoHead supports the use of <i>ArUco MIP 36h12</i>, <i>AprilTag 36h11</i>, and <i>Original ArUco</i> markers. The first two are generally considered the most reliable (fewer false detections), while Original ArUco has slightly larger cells (for the same size marker) which may help with detection at lower resolutions.</p>
         <p><b>Marker size</b>: The ideal marker size will depend on camera resolution, the maximum distance from the camera, and personal comfort. The lower the camera's resolution and the greater the distance from the camera, the larger the markers need to be. The default is 80mm, which is suitable for close to medium distances.</p>
         <p>For best results always include a plain white border around the marker. This border should be at least the width of one marker cell (one of the black or white squares that make up the marker), and preferably the width of two cells. Small borders are likely to give poor results, especially at lower resolutions.</p>
         <p>
@@ -113,10 +129,12 @@
                 <li>Increase the size of your printed markers.</li>
                 <li>Give the markers a larger border.</li>
                 <li>Set the camera to a higher resolution.</li>
-                <li>Adjust the angle and position of your markers so they're not too flat or too slanted, as viewed by the camera.</li>
+                <li>Move closer to the camera.</li>
+                <li>Adjust your markers so they're not too flat or too slanted, as viewed by the camera, when the tracker is started.</li>
+                <li>Choose a different marker configuration (see <a href="#markersetup">Marker Setup</a>).</li>
                 <li>Set the minimum preferred marker angle to a higher value.</li>
                 <li>Set the maximum preferred marker angle to a lower value.</li>
-                <li>Change filter settings to reduce or eliminate any remaining jitter.</li>
+                <li>Change your OpenTrack filter's settings to reduce or eliminate any remaining jitter.</li>
             </ul>
         </p>
         <p>&nbsp;</p>
