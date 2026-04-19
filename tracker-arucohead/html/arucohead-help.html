@@ -9,6 +9,8 @@
             li.checked::marker { content: "\2612"; }
             th { text-align:left; text-decoration: underline; padding-left:2em; }
             td { padding-left:2em; }
+            sup { float:right; }
+            .back-link { text-decoration:none; color: rgb(200, 200, 200); }
         </style>
     </head>
     <body>
@@ -16,7 +18,12 @@
         <p>ArUcoHead is a paper marker tracking system that uses a simplified head model for pose estimation. Instead of using markers for direct positioning, it uses markers as spatial guides to determine the head model's position and orientation. Multiple markers can be used together for improved accuracy and a broader range of motion.</p>
         <p>ArUcoHead is compatible with <i>ArUco MIP 36h12</i>, <i>AprilTag 36h11</i>, and <i>Original ArUco</i> marker dictionaries.</p>
 
-        <h1 id="markersetup">Marker Setup</h1>
+        <h1>Contents</h1>
+        <div><a href="#markersetup">Marker Setup</a></div>
+        <div><a href="#settings">Settings</a><div style="margin-left: 0.5em"><a href="#camera">Camera</a></div><div style="margin-left: 0.5em"><a href="#aruco">ArUco</a></div><div style="margin-left: 0.5em"><a href="#head">Head / Hat</a></div></div>
+        <div><a href="#troubleshooting">Troubleshooting</a></div>
+
+        <h1 id="markersetup">Marker Setup <a href="#top" class="back-link">↑</a></h1>
         <p>The simplest setup has a single marker centered on the forehead:</p>
         <p style="text-align: center; margin-top: 32px;"><img src="qrc:/images/markers-single.png" /></p>
         <p style="text-align: center; margin-bottom: 32px;"><i>Figure 1: Single marker, centered, as seen from the top.</i></p>
@@ -31,8 +38,8 @@
         <p style="text-align: center; margin-bottom: 32px;"><i>Figure 4: Centered key marker with supplemental markers angled away from the head.</i></p>
         <p>Setups where multiple markers are within view of the camera at the same time typically produce the most reliable and stable tracking.</p>
 
-        <h1>Settings</h1>
-        <h2>Camera</h2>
+        <h1 id="settings">Settings <a href="#top" class="back-link">↑</a></h1>
+        <h2 id="camera">Camera <a href="#top" class="back-link">↑</a></h2>
         <p><b>Camera Name</b>: Select your camera from the dropdown menu.</p>
         <p><b>Width and Height</b>: Enter a resolution supported by your camera. Common resolutions include:</p>
         <p>
@@ -78,9 +85,9 @@
         <p><b>Use MJPEG</b>: Request an MJPEG video stream from the camera. Certain resolutions and frame rates may only be available in this mode, depending on the camera.</p>
         <p><b>Settings (Open)</b>: Opens the system camera settings dialog.</p>
 
-        <h2>ArUco</h2>
+        <h2 id="aruco">ArUco <a href="#top" class="back-link">↑</a></h2>
         <p>Markers can be generated and printed at <a href="https://chev.me/arucogen/">chev.me/arucogen/</a>. Use double-sided tape or a thin layer of glue stick to affix the printed markers to a rigid surface like cardboard or a 3D-printed plate, then mount them on a hat or head band. Start the tracker with your head facing forward, looking straight at the monitor. Avoid mounting the markers such that they're flat to the camera while in this position as pose detection is less reliable when markers are facing the camera straight-on.</p>
-        <p><b>Dictionary</b>: ArUcoHead supports the use of <i>ArUco MIP 36h12</i>, <i>AprilTag 36h11</i>, and <i>Original ArUco</i> markers. The first two are generally considered the most reliable (fewer false detections), while Original ArUco has slightly larger cells (for the same size marker) which may help with detection at lower resolutions.</p>
+        <p><b>Dictionary</b>: ArUcoHead supports the use of ArUco MIP 36h12, AprilTag 36h11, and Original ArUco markers. The first two are generally considered the most reliable (fewer false detections), while Original ArUco has slightly larger cells when printed at the same size as the others which may help with detection at lower resolutions.</p>
         <p><b>Marker size</b>: The ideal marker size will depend on camera resolution, the maximum distance from the camera, and personal comfort. The lower the camera's resolution and the greater the distance from the camera, the larger the markers need to be. The default is 80mm, which is suitable for close to medium distances.</p>
         <p>For best results always include a plain white border around the marker. This border should be at least the width of one marker cell (one of the black or white squares that make up the marker), and preferably the width of two cells. Small borders are likely to give poor results, especially at lower resolutions.</p>
         <p>
@@ -116,13 +123,13 @@
         <p><b>Preferred marker angle (maximum)</b>: When using multiple markers, prioritize markers whose angle relative to the camera is less than this value. This may help reduce the jitter that can be observed when some of the markers are angled away from the camera, especially at lower resolutions or when marker borders are small. If no detected markers meet this requirement the tracker will choose among the best available markers instead. The default is 55°.</p>
         <p>To include all angles set the minimum angle to 0° and the maximum to 90°.</p>
 
-        <h2>Head / Hat</h2>
+        <h2 id="head">Head / Hat <a href="#top" class="back-link">↑</a></h2>
         <p>These measurements help the software translate marker movement into accurate head movement.</p>
         <p><b>Circumference</b>: Measure around your head or hat at the exact level where the markers are positioned.</p>
         <p><b>Jawline to marker distance</b>: Measure vertically from your jawline to the marker level, used to determine the pivot point for head tilt and rotation.</p>
         <p><b>Roundness</b>: Defines the shape of your head or hat as seen from above. Increase this value for a rounder profile, or lower it for a more oval profile. Adjust this if the detection box looks off-center during tracking. Marker configurations that don't include a central marker are especially sensitive to this.</p>
 
-        <h1>Troubleshooting</h1>
+        <h1 id="troubleshooting">Troubleshooting <a href="#top" class="back-link">↑</a></h1>
         <p>If the tracking is too jittery you can try the following:</p>
         <p>
             <ul>
