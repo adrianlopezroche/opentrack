@@ -304,7 +304,7 @@ bool PaperTracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 
                 if (marker_rvecs.count(id) > 0) {
                     if (!head.has_handle(id)) {
-                        auto [rvec_local, tvec_local] = head.get_marker_local_transform(marker_rvecs[id], marker_tvecs[id], circumference_to_radius(s.head_circumference_cm), s.marker_height_cm);
+                        auto [rvec_local, tvec_local] = get_marker_local_transform(marker_rvecs[id], marker_tvecs[id], head.rvec, head.tvec, circumference_to_radius(s.head_circumference_cm), s.marker_height_cm);
                         head.set_handle(Marker(id, MeanVector(rvec_local, MeanVector::VectorType::ROTATION), MeanVector(tvec_local, MeanVector::VectorType::POLAR)));
                     } else if (pose_rvecs.size() > 1 && id != s.first_marker_id) {
                         auto &handle = head.get_handle(id);

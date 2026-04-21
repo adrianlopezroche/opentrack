@@ -22,7 +22,6 @@ namespace papertracker {
         void set_handle(const Marker &handle);
         Marker &get_handle(int id);
         size_t num_handles();
-        std::pair<cv::Vec3d, cv::Vec3d> get_marker_local_transform(cv::Vec3d &rvec, cv::Vec3d &tvec, double xz_reference, double y_reference);
         std::pair<cv::Vec3d, cv::Vec3d> get_pose_from_handle_transform(int id, cv::Vec3d &rvec, cv::Vec3d &tvec, double xz_reference, double y_reference);
         std::vector<int> get_expected_visible_ids(double max_angle);
     };

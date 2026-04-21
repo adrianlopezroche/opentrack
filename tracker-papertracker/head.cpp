@@ -25,10 +25,6 @@ namespace papertracker {
         return handles.size();
     }
 
-    std::pair<cv::Vec3d, cv::Vec3d> Head::get_marker_local_transform(cv::Vec3d &rvec_measured, cv::Vec3d &tvec_measured, double xz_reference, double y_reference) {
-        return papertracker::get_marker_local_transform(rvec_measured, tvec_measured, rvec, tvec, xz_reference, y_reference);
-    }
-
     std::pair<cv::Vec3d, cv::Vec3d> Head::get_pose_from_handle_transform(int id, cv::Vec3d &rvec_measured, cv::Vec3d &tvec_measured, double xz_reference, double y_reference) {
         cv::Vec3d pose_rvec;
         cv::Vec3d pose_tvec;
