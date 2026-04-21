@@ -4,28 +4,28 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  */
-#include "arucohead-help-dialog.h"
-#include "ui_arucohead-help.h"
+#include "papertracker-help-dialog.h"
+#include "ui_papertracker-help.h"
 #include <QIODevice>
 #include <QFile>
 #include <QRegularExpression>
 
-ArucoheadHelpDialog::ArucoheadHelpDialog(QWidget *parent) :
+PaperTrackerHelpDialog::PaperTrackerHelpDialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::ArUcoheadHelpDialog)
+    ui(new Ui::PaperTrackerHelpDialog)
 {
     ui->setupUi(this);
-    loadHelpText(":html/arucohead-help.html");
+    loadHelpText(":html/papertracker-help.html");
 }
 
-ArucoheadHelpDialog::~ArucoheadHelpDialog()
+PaperTrackerHelpDialog::~PaperTrackerHelpDialog()
 {
     delete ui;
 }
 
 /* Load help text from filePath into QTextBrowser control.
 */
-void ArucoheadHelpDialog::loadHelpText(const QString &filePath)
+void PaperTrackerHelpDialog::loadHelpText(const QString &filePath)
 {
     QFile file(filePath);
 
@@ -47,7 +47,7 @@ void ArucoheadHelpDialog::loadHelpText(const QString &filePath)
 
 /* Extra whitespace casuses formatting issues with QTextBrowser, so remove it.
 */
-QString ArucoheadHelpDialog::removeSpaces(QString &input)
+QString PaperTrackerHelpDialog::removeSpaces(QString &input)
 {
     // Collapse all whitespace sequences to a single space.
     input.replace(QRegularExpression("\\s+"), " ");

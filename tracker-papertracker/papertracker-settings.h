@@ -10,13 +10,13 @@
 
 using namespace options;
 
-enum arucohead_dictionary {
-    ARUCOHEAD_DICT_ARUCO_ORIGINAL,
-    ARUCOHEAD_DICT_ARUCO_MIP_36h12,
-    ARUCOHEAD_DICT_APRILTAG_36h11
+enum papertracker_dictionary {
+    PAPERTRACKER_DICT_ARUCO_ORIGINAL,
+    PAPERTRACKER_DICT_ARUCO_MIP_36h12,
+    PAPERTRACKER_DICT_APRILTAG_36h11
 };
 
-struct arucohead_settings : public opts
+struct papertracker_settings : public opts
 {
     value<int> frame_width { b, "frame_width", 640 };
     value<int> frame_height { b, "frame_height", 480 };
@@ -28,17 +28,17 @@ struct arucohead_settings : public opts
     value<double> head_circumference_cm { b, "head_circumference_cm", 60 };
     value<double> marker_height_cm { b, "marker_height_cm", 20 };
     value<slider_value> cephalic_index{ b, "cephalic_index", slider_value(75, 50, 100) };
-    value<arucohead_dictionary> aruco_dictionary { b, "aruco_dictionary", arucohead_dictionary::ARUCOHEAD_DICT_ARUCO_MIP_36h12 };
+    value<papertracker_dictionary> aruco_dictionary { b, "aruco_dictionary", papertracker_dictionary::PAPERTRACKER_DICT_ARUCO_MIP_36h12 };
     value<QString> camera_name { b, "camera_name", "" };
     value<int> zoom { b, "zoom", 100 };
     value<int> fov { b, "fov", 56 };
     value<int> marker_min_angle { b, "marker_min_angle", 15 };
     value<int> marker_max_angle { b, "marker_max_angle", 55 };
 
-    arucohead_settings();
+    papertracker_settings();
 };
 
-struct arucohead_static_settings
+struct papertracker_static_settings
 {
     int frame_width;
     int frame_height;
@@ -47,5 +47,5 @@ struct arucohead_static_settings
     QString camera_name;
     int aruco_marker_size_mm;
     double cephalic_index;
-    arucohead_dictionary aruco_dictionary;
+    papertracker_dictionary aruco_dictionary;
 };

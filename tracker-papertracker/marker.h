@@ -8,7 +8,7 @@
 
 #include "meanvector.h"
 
-namespace arucohead {
+namespace papertracker {
     struct Marker
     {
         int id;

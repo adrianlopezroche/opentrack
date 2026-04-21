@@ -14,11 +14,11 @@
         </style>
     </head>
     <body>
-        <h1>ArUcoHead Paper Marker Tracker</h1>
-        <p>ArUcoHead is a paper marker tracking system that uses a simplified head model for pose estimation. Instead of using markers for direct positioning, it uses markers as spatial guides to determine the head model's position and orientation. Multiple markers can be used together for improved accuracy and a broader range of motion.</p>
-        <p>ArUcoHead is compatible with <i>ArUco MIP 36h12</i>, <i>AprilTag 36h11</i>, and <i>Original ArUco</i> marker dictionaries.</p>
+        <h1>PaperTracker</h1>
+        <p>PaperTracker is a paper marker tracking system that uses a simplified head model for pose estimation. Instead of using markers for direct positioning, it uses markers as spatial guides to determine the head model's position and orientation. Multiple markers can be used together for improved accuracy and a broader range of motion.</p>
+        <p>PaperTracker is compatible with <i>ArUco MIP 36h12</i>, <i>AprilTag 36h11</i>, and <i>Original ArUco</i> marker dictionaries.</p>
 
-        <h1>Contents</h1>
+        <h1>Contents <a href="#top" class="back-link">↑</a></h1>
         <div><a href="#markersetup">Marker Setup</a></div>
         <div><a href="#settings">Settings</a><div style="margin-left: 0.5em"><a href="#camera">Camera</a></div><div style="margin-left: 0.5em"><a href="#aruco">ArUco</a></div><div style="margin-left: 0.5em"><a href="#head">Head / Hat</a></div></div>
         <div><a href="#troubleshooting">Troubleshooting</a></div>
@@ -87,7 +87,7 @@
 
         <h2 id="aruco">ArUco <a href="#top" class="back-link">↑</a></h2>
         <p>Markers can be generated and printed at <a href="https://chev.me/arucogen/">chev.me/arucogen/</a>. Use double-sided tape or a thin layer of glue stick to affix the printed markers to a rigid surface like cardboard or a 3D-printed plate, then mount them on a hat or head band. Start the tracker with your head facing forward, looking straight at the monitor. Avoid mounting the markers such that they're flat to the camera while in this position as pose detection is less reliable when markers are facing the camera straight-on.</p>
-        <p><b>Dictionary</b>: ArUcoHead supports the use of ArUco MIP 36h12, AprilTag 36h11, and Original ArUco markers. The first two are generally considered the most reliable (fewer false detections), while Original ArUco has slightly larger cells when printed at the same size as the others which may help with detection at lower resolutions.</p>
+        <p><b>Dictionary</b>: PaperTracker supports the use of ArUco MIP 36h12, AprilTag 36h11, and Original ArUco markers. The first two are generally considered the most reliable (fewer false detections), while Original ArUco has slightly larger cells when printed at the same size as the others which may help with detection at lower resolutions.</p>
         <p><b>Marker size</b>: The ideal marker size will depend on camera resolution, the maximum distance from the camera, and personal comfort. The lower the camera's resolution and the greater the distance from the camera, the larger the markers need to be. The default is 80mm, which is suitable for close to medium distances.</p>
         <p>For best results always include a plain white border around the marker. This border should be at least the width of one marker cell (one of the black or white squares that make up the marker), and preferably the width of two cells. Small borders are likely to give poor results, especially at lower resolutions.</p>
         <p>

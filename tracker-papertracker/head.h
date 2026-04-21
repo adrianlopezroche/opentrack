@@ -10,7 +10,7 @@
 #include <vector>
 #include "marker.h"
 
-namespace arucohead {
+namespace papertracker {
     class Head {
     private:
         std::unordered_map<int, Marker> handles;

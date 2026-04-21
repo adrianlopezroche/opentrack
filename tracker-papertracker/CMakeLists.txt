@@ -32,7 +32,7 @@ if(OpenCV_FOUND)
         maybe_add_static_define()
         otr_install_lib("${SDK_ARUCO_LIBPATH}" "${opentrack-libexec}")
 
-        otr_module(tracker-arucohead)
+        otr_module(tracker-papertracker)
         target_include_directories(${self} SYSTEM PUBLIC ${OpenCV_INCLUDE_DIRS} "${dir}")
         target_link_libraries(${self} PRIVATE opentrack-cv ${modules})
     endif()

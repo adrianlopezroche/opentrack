@@ -4,8 +4,8 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  */
-#include "arucohead-tracker.h"
-#include "arucohead-util.h"
+#include "papertracker.h"
+#include "papertracker-util.h"
 #include "marker-detect.h"
 #include "api/plugin-api.hpp"
 #include "cv/init.hpp"
@@ -17,11 +17,11 @@
 #include <unordered_set>
 #include <QDebug>
 
-using namespace arucohead;
+using namespace papertracker;
 
 /* Open camera selected in settings.
 */
-bool arucohead_tracker::open_camera()
+bool PaperTracker::open_camera()
 {
     /* Prevent concurrent access to the camera.
     */
@@ -47,7 +47,7 @@ bool arucohead_tracker::open_camera()
     args.use_mjpeg = static_settings.use_mjpeg;
 
     if (!camera->start(args)) {
-        qDebug() << "ArUcoHead: could not open camera.";
+        qDebug() << "PaperTracker: could not open camera.";
         return false;
     }
 
@@ -56,7 +56,7 @@ bool arucohead_tracker::open_camera()
 
 /* Detect markers, update head pose, and draw AR elements.
 */
-bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
+bool PaperTracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 {
     /* Pose vectors for each detected marker.
     */
@@ -178,7 +178,7 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
             */
             marker_z_angles[id] = get_marker_z_angle(marker_rvecs[id]);
 
-            if (error_ratio > ARUCOHEAD_MARKER_EXCLUSION_AMBIGUITY_THRESHOLD ||
+            if (error_ratio > PAPERTRACKER_MARKER_EXCLUSION_AMBIGUITY_THRESHOLD ||
                 marker_z_angles[id] < CV_PI / 180.0 * s.marker_min_angle ||
                 marker_z_angles[id] > CV_PI / 180.0 * s.marker_max_angle)
             {
@@ -278,7 +278,7 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
             if (head.has_handle(id)) {
                 const auto sample_count = head.get_handle(id).rvec_local.get_max_sample_count();
 
-                if (sample_count < ARUCOHEAD_MIN_VECTOR_SAMPLES && selected_markers.size() != 1)
+                if (sample_count < PAPERTRACKER_MIN_VECTOR_SAMPLES && selected_markers.size() != 1)
                     continue;
 
                 if (marker_rvecs.count(id) > 0)
@@ -306,7 +306,7 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
                     if (!head.has_handle(id)) {
                         auto [rvec_local, tvec_local] = head.get_marker_local_transform(marker_rvecs[id], marker_tvecs[id], circumference_to_radius(s.head_circumference_cm), s.marker_height_cm);
                         head.set_handle(Marker(id, MeanVector(rvec_local, MeanVector::VectorType::ROTATION), MeanVector(tvec_local, MeanVector::VectorType::POLAR)));
-                    } else if (pose_rvecs.size() > 1) {
+                    } else if (pose_rvecs.size() > 1 && id != s.first_marker_id) {
                         auto &handle = head.get_handle(id);
 
                         if (!handle.rvec_local.outliers_removed() && handle.rvec_local.sample_count() == handle.rvec_local.get_max_sample_count())
@@ -337,13 +337,13 @@ bool arucohead_tracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
 
         const auto bin = visited_angles.get_bin(euler[0], euler[1]);
 
-        if (bin != last_bin && visited_angles.get_visit_count(last_bin) < ARUCOHEAD_ANGLE_COVERAGE_VISIT_THRESHOLD)
+        if (bin != last_bin && visited_angles.get_visit_count(last_bin) < PAPERTRACKER_ANGLE_COVERAGE_VISIT_THRESHOLD)
             visited_angles.clear_visits(last_bin);
 
-        if (roi == nullptr && visited_angles.get_visit_count(bin) < ARUCOHEAD_ANGLE_COVERAGE_VISIT_THRESHOLD)
+        if (roi == nullptr && visited_angles.get_visit_count(bin) < PAPERTRACKER_ANGLE_COVERAGE_VISIT_THRESHOLD)
             visited_angles.add_visit(bin);
 
-        if (head.num_handles() < s.number_of_markers && visited_angles.get_visit_count(bin) < ARUCOHEAD_ANGLE_COVERAGE_VISIT_THRESHOLD) {
+        if (head.num_handles() < s.number_of_markers && visited_angles.get_visit_count(bin) < PAPERTRACKER_ANGLE_COVERAGE_VISIT_THRESHOLD) {
             detection_failed = true;
         } else {
             auto expected_ids = head.get_expected_visible_ids(CV_PI / 180.0 * s.marker_max_angle);
@@ -366,7 +366,7 @@ static const int adaptive_threshold_sizes[] =
 
 /* Cycle through thresholding parameters. Adapted from ftnoir_tracker_aruco.cpp.
 */
-void arucohead_tracker::cycle_threshold_params()
+void PaperTracker::cycle_threshold_params()
 {
     if (!use_fixed_threshold) {
         use_fixed_threshold = true;
@@ -386,7 +386,7 @@ void arucohead_tracker::cycle_threshold_params()
 
 /* Update detector thresholding parameters. Adapted from ftnoir_tracker_aruco.cpp.
 */
-void arucohead_tracker::set_threshold_params()
+void PaperTracker::set_threshold_params()
 {
     detector.setDesiredSpeed(3);
 
@@ -395,12 +395,12 @@ void arucohead_tracker::set_threshold_params()
     else
         detector._thresMethod = aruco::MarkerDetector::ADPT_THRES;
 
-    detector.setThresholdParams(adaptive_threshold_sizes[adaptive_size_pos], ARUCOHEAD_ADAPTIVE_THRESHOLD_C);
+    detector.setThresholdParams(adaptive_threshold_sizes[adaptive_size_pos], PAPERTRACKER_ADAPTIVE_THRESHOLD_C);
 }
 
 /* Generate a camera matrix for the given image dimension and field of view (in radians).
 */
-cv::Mat arucohead_tracker::build_camera_matrix(int image_width, int image_height, double diagonal_fov)
+cv::Mat PaperTracker::build_camera_matrix(int image_width, int image_height, double diagonal_fov)
 {
     double diagonal_px = cv::sqrt(image_width*image_width + image_height*image_height);
 
@@ -418,7 +418,7 @@ cv::Mat arucohead_tracker::build_camera_matrix(int image_width, int image_height
     return cv::Mat(3, 3, CV_64F, data).clone();
 }
 
-cv::Rect2f arucohead_tracker::get_marker_detected_region(const std::vector<marker_detection_info> &markers)
+cv::Rect2f PaperTracker::get_marker_detected_region(const std::vector<marker_detection_info> &markers)
 {
     if (markers.size() == 0 || markers[0].corners.size() == 0)
         return cv::Rect2f(0, 0, 0, 0);
@@ -438,15 +438,15 @@ cv::Rect2f arucohead_tracker::get_marker_detected_region(const std::vector<marke
     const double w = max.x - min.x;
     const double h = max.y - min.y;
 
-    min.x -= w * ARUCOHEAD_ROI_GROWTH_FACTOR / 2.0;
-    min.y -= h * ARUCOHEAD_ROI_GROWTH_FACTOR / 2.0;
-    max.x += w * ARUCOHEAD_ROI_GROWTH_FACTOR / 2.0;
-    max.y += h * ARUCOHEAD_ROI_GROWTH_FACTOR / 2.0;
+    min.x -= w * PAPERTRACKER_ROI_GROWTH_FACTOR / 2.0;
+    min.y -= h * PAPERTRACKER_ROI_GROWTH_FACTOR / 2.0;
+    max.x += w * PAPERTRACKER_ROI_GROWTH_FACTOR / 2.0;
+    max.y += h * PAPERTRACKER_ROI_GROWTH_FACTOR / 2.0;
 
     return cv::Rect2f(min, max);
 }
 
-bool arucohead_tracker::markers_disappeared(const std::vector<int> &expected, const std::vector<marker_detection_info> &detected) {
+bool PaperTracker::markers_disappeared(const std::vector<int> &expected, const std::vector<marker_detection_info> &detected) {
     for (const int expected_id : expected) {
         bool found = false;
 
@@ -466,7 +466,7 @@ bool arucohead_tracker::markers_disappeared(const std::vector<int> &expected, co
 
 /* Draw a bounding box around the head from dimensions defined in settings.
 */
-void arucohead_tracker::draw_head_bounding_box(cv::Mat &image)
+void PaperTracker::draw_head_bounding_box(cv::Mat &image)
 {
     double head_radius = circumference_to_radius(s.head_circumference_cm);
 
@@ -489,7 +489,7 @@ void arucohead_tracker::draw_head_bounding_box(cv::Mat &image)
     const cv::Scalar brightness2(0.8, 0.8, 0.8);
     const cv::Scalar brightness1(0.5, 0.5, 0.5);
 
-    const double line_thickness = std::max(image.cols * ARUCOHEAD_LINE_THICKNESS_FRAME_SCALING_FACTOR, 1.0);
+    const double line_thickness = std::max(image.cols * PAPERTRACKER_LINE_THICKNESS_FRAME_SCALING_FACTOR, 1.0);
 
     cv::line(image, image_points[0], image_points[1], box_color * brightness2, line_thickness);
     cv::line(image, image_points[1], image_points[2], box_color * brightness3, line_thickness);
@@ -509,13 +509,13 @@ void arucohead_tracker::draw_head_bounding_box(cv::Mat &image)
 
 /* Draw a border around a marker given its vertices in image space.
 */
-void arucohead_tracker::draw_marker_border(cv::Mat &image, const std::vector<cv::Point2f> &image_points, int id, const cv::Scalar &border_color)
+void PaperTracker::draw_marker_border(cv::Mat &image, const std::vector<cv::Point2f> &image_points, int id, const cv::Scalar &border_color)
 {
     const size_t vertex_count = image_points.size();
 
     cv::Point2f center(0, 0);
 
-    const double line_thickness = std::max(image.cols * ARUCOHEAD_LINE_THICKNESS_FRAME_SCALING_FACTOR, 1.0);
+    const double line_thickness = std::max(image.cols * PAPERTRACKER_LINE_THICKNESS_FRAME_SCALING_FACTOR, 1.0);
     const double font_scale = line_thickness * 0.5;
 
     for (size_t v = 0; v < vertex_count; ++v) {
@@ -535,7 +535,7 @@ void arucohead_tracker::draw_marker_border(cv::Mat &image, const std::vector<cv:
 
 /* Draw coordinate axes for a given pose (rvec/tvec).
 */
-void arucohead_tracker::draw_axes(cv::Mat &image, const cv::Vec3d &rvec, const cv::Vec3d &tvec, double axis_length, bool color)
+void PaperTracker::draw_axes(cv::Mat &image, const cv::Vec3d &rvec, const cv::Vec3d &tvec, double axis_length, bool color)
 {
     std::vector<cv::Point3d> axis_points = {
         {0, 0, 0},
@@ -547,7 +547,7 @@ void arucohead_tracker::draw_axes(cv::Mat &image, const cv::Vec3d &rvec, const c
     std::vector<cv::Point2d> image_points;
     cv::projectPoints(axis_points, rvec, tvec, camera_matrix, dist_coeffs, image_points);
 
-    const double line_thickness = std::max(image.cols * ARUCOHEAD_LINE_THICKNESS_FRAME_SCALING_FACTOR, 1.0);
+    const double line_thickness = std::max(image.cols * PAPERTRACKER_LINE_THICKNESS_FRAME_SCALING_FACTOR, 1.0);
         
     cv::line(image, image_points[0], image_points[1], color ? cv::Scalar(0, 0, 255) : cv::Scalar(255, 255, 255), line_thickness);
     cv::line(image, image_points[0], image_points[2], color ? cv::Scalar(0, 255, 0) : cv::Scalar(255, 255, 255), line_thickness);
@@ -556,7 +556,7 @@ void arucohead_tracker::draw_axes(cv::Mat &image, const cv::Vec3d &rvec, const c
 
 /* Update FPS average.
 */
-void arucohead_tracker::update_fps()
+void PaperTracker::update_fps()
 {
     const double dt = fps_timer.elapsed_seconds();
     fps_timer.start();
@@ -571,7 +571,7 @@ void arucohead_tracker::update_fps()
 
 /* Start tracking.
 */
-module_status arucohead_tracker::start_tracker(QFrame *videoframe)
+module_status PaperTracker::start_tracker(QFrame *videoframe)
 {
     static_settings.frame_width = s.frame_width;
     static_settings.frame_height = s.frame_height;
@@ -585,11 +585,11 @@ module_status arucohead_tracker::start_tracker(QFrame *videoframe)
     static_settings.cephalic_index = cephalic_index;
 
     switch (static_settings.aruco_dictionary) {
-        case ARUCOHEAD_DICT_ARUCO_MIP_36h12:
+        case PAPERTRACKER_DICT_ARUCO_MIP_36h12:
             detector.setMakerDetectorFunction(detect_aruco_mip_36h12);
             break;
 
-        case ARUCOHEAD_DICT_APRILTAG_36h11:
+        case PAPERTRACKER_DICT_APRILTAG_36h11:
             detector.setMakerDetectorFunction(detect_apriltag_36h11);
             break;
     }
@@ -614,7 +614,7 @@ module_status arucohead_tracker::start_tracker(QFrame *videoframe)
 
 /* Main thread / update loop.
 */
-void arucohead_tracker::run() {
+void PaperTracker::run() {
     dist_coeffs = std::vector<double>(5, 0);
 
     if (!open_camera())
@@ -647,7 +647,7 @@ void arucohead_tracker::run() {
         /* Frames must have 1 (grayscale) or 3 (color) channels.
         */
         if (frame.channels != 1 && frame.channels != 3) {
-            qDebug() << "ArUcoHead: can't handle" << frame.channels << "color channels";
+            qDebug() << "PaperTracker: can't handle" << frame.channels << "color channels";
             return;
         }
 
@@ -672,7 +672,7 @@ void arucohead_tracker::run() {
         bool detection_ok = process_frame(frame_mat, &last_roi) || process_frame(frame_mat);
 
         if (detection_ok) {
-            no_detection_timeout -= last_detection_timer.elapsed_seconds() * ARUCOHEAD_NO_DETECTION_TIMEOUT_BACKOFF_C;
+            no_detection_timeout -= last_detection_timer.elapsed_seconds() * PAPERTRACKER_NO_DETECTION_TIMEOUT_BACKOFF_C;
             no_detection_timeout = std::fmax(0, no_detection_timeout);
             last_detection_timer.start();
         } else {
@@ -680,7 +680,7 @@ void arucohead_tracker::run() {
 
             last_detection_timer.start();
 
-            if (no_detection_timeout > ARUCOHEAD_NO_DETECTION_TIMEOUT) {
+            if (no_detection_timeout > PAPERTRACKER_NO_DETECTION_TIMEOUT) {
                 no_detection_timeout = 0;
                 cycle_threshold_params();
             }
@@ -709,7 +709,7 @@ void arucohead_tracker::run() {
         std::stringstream ss;
         ss << frame.width << "x" << frame.height << " @ " << int(fps) << "Hz";
 
-        const double line_thickness = std::max(frame_mat.cols * ARUCOHEAD_LINE_THICKNESS_FRAME_SCALING_FACTOR, 1.0);
+        const double line_thickness = std::max(frame_mat.cols * PAPERTRACKER_LINE_THICKNESS_FRAME_SCALING_FACTOR, 1.0);
         const double font_scale = line_thickness * 0.5;
 
         const auto text_size = cv::getTextSize(ss.str(), cv::FONT_HERSHEY_SIMPLEX, font_scale, line_thickness, nullptr);
@@ -723,12 +723,12 @@ void arucohead_tracker::run() {
     }
 }
 
-bool arucohead_tracker::tracking_started() const
+bool PaperTracker::tracking_started() const
 {
     return started_;
 }
 
-bool arucohead_tracker::restart_required() const
+bool PaperTracker::restart_required() const
 {
     const double cephalic_index { s.cephalic_index };
 
@@ -745,7 +745,7 @@ bool arucohead_tracker::restart_required() const
 
 /* Supply position and orientation data.
 */
-void arucohead_tracker::data(double *data)
+void PaperTracker::data(double *data)
 {
     QMutexLocker l(&data_mtx);
 
@@ -768,9 +768,9 @@ void arucohead_tracker::data(double *data)
 
 /* Tracker constructor.
 */
-arucohead_tracker::arucohead_tracker() :
+PaperTracker::PaperTracker() :
     has_key_marker(false),
-    visited_angles(2.0 * CV_PI / ARUCOHEAD_ANGLE_COVERAGE_PITCH_STEPS, 2.0 * CV_PI / ARUCOHEAD_ANGLE_COVERAGE_YAW_STEPS),
+    visited_angles(2.0 * CV_PI / PAPERTRACKER_ANGLE_COVERAGE_PITCH_STEPS, 2.0 * CV_PI / PAPERTRACKER_ANGLE_COVERAGE_YAW_STEPS),
     last_roi(0, 0, std::numeric_limits<float>::max(), std::numeric_limits<float>::max()),
     last_bin(std::numeric_limits<int>::max(), std::numeric_limits<int>::max()),
     started_(false),
@@ -783,7 +783,7 @@ arucohead_tracker::arucohead_tracker() :
 
 /* Tracker destructor.
 */
-arucohead_tracker::~arucohead_tracker() {
+PaperTracker::~PaperTracker() {
     requestInterruption();
     wait();
     portable::sleep(1000);
@@ -791,4 +791,4 @@ arucohead_tracker::~arucohead_tracker() {
 
 /* Tracker declaration.
 */
-OPENTRACK_DECLARE_TRACKER(arucohead_tracker, arucohead_dialog, arucohead_metadata)
+OPENTRACK_DECLARE_TRACKER(PaperTracker, PaperTrackerDialog, PaperTrackerMetadata)

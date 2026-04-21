@@ -14,7 +14,7 @@
 #include <intrin.h>
 #endif 
 
-namespace arucohead {
+namespace papertracker {
     /* Hamming distance between two IDs.
     */
     inline int hammingDistance(uint64_t a, uint64_t b) {

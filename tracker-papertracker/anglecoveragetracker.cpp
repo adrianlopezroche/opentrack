@@ -6,7 +6,7 @@
  */
 #include "anglecoveragetracker.h"
 
-namespace arucohead {
+namespace papertracker {
     AngleCoverageBin::AngleCoverageBin(int pitch_index, int yaw_index)
         : pitch_index(pitch_index), yaw_index(yaw_index)
     {}

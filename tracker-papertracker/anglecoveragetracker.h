@@ -8,7 +8,7 @@
 
 #include <unordered_map>
 
-namespace arucohead {
+namespace papertracker {
     struct AngleCoverageBin {
         int pitch_index;
         int yaw_index;
@@ -21,8 +21,8 @@ namespace arucohead {
 
 namespace std {
     template <>
-    struct hash<arucohead::AngleCoverageBin> {
-        size_t operator()(const arucohead::AngleCoverageBin& b) const {
+    struct hash<papertracker::AngleCoverageBin> {
+        size_t operator()(const papertracker::AngleCoverageBin& b) const {
             size_t h1 = std::hash<int>{}(b.pitch_index);
             size_t h2 = std::hash<int>{}(b.yaw_index);
             return h1 ^ (h2 << 32 | h2 >> 32);
@@ -30,7 +30,7 @@ namespace std {
     };
 }
 
-namespace arucohead {
+namespace papertracker {
     class AngleCoverageTracker {
     public:
         AngleCoverageTracker(double pitch_step, double yaw_step);

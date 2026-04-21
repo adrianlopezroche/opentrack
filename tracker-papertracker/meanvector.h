@@ -9,7 +9,7 @@
 #include <vector>
 #include <opencv2/core.hpp>
 
-namespace arucohead {
+namespace papertracker {
     class MeanVector
     {
     public:

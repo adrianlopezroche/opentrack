@@ -5,10 +5,10 @@
  * copyright notice and this permission notice appear in all copies.
  */
 #include "head.h"
-#include "arucohead-util.h"
+#include "papertracker-util.h"
 #include <opencv2/opencv.hpp>
 
-namespace arucohead {
+namespace papertracker {
     bool Head::has_handle(int id) {
         return handles.count(id) > 0;
     }
@@ -26,7 +26,7 @@ namespace arucohead {
     }
 
     std::pair<cv::Vec3d, cv::Vec3d> Head::get_marker_local_transform(cv::Vec3d &rvec_measured, cv::Vec3d &tvec_measured, double xz_reference, double y_reference) {
-        return arucohead::get_marker_local_transform(rvec_measured, tvec_measured, rvec, tvec, xz_reference, y_reference);
+        return papertracker::get_marker_local_transform(rvec_measured, tvec_measured, rvec, tvec, xz_reference, y_reference);
     }
 
     std::pair<cv::Vec3d, cv::Vec3d> Head::get_pose_from_handle_transform(int id, cv::Vec3d &rvec_measured, cv::Vec3d &tvec_measured, double xz_reference, double y_reference) {

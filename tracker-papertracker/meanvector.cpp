@@ -5,15 +5,15 @@
  * copyright notice and this permission notice appear in all copies.
  */
 #include "meanvector.h"
-#include "arucohead-util.h"
+#include "papertracker-util.h"
 #include "config.h"
 #include <opencv2/opencv.hpp>
 
-namespace arucohead {
-    MeanVector::MeanVector() : type(VectorType::POLAR), outliers_removed_(true), outliers_removed_std_dev(0), max_sample_count(ARUCOHEAD_MAX_VECTOR_SAMPLES)
+namespace papertracker {
+    MeanVector::MeanVector() : type(VectorType::POLAR), outliers_removed_(true), outliers_removed_std_dev(0), max_sample_count(PAPERTRACKER_MAX_VECTOR_SAMPLES)
     {}
 
-    MeanVector::MeanVector(const cv::Vec3d &v, VectorType type) : type(type), outliers_removed_(true), outliers_removed_std_dev(0), max_sample_count(ARUCOHEAD_MAX_VECTOR_SAMPLES) {
+    MeanVector::MeanVector(const cv::Vec3d &v, VectorType type) : type(type), outliers_removed_(true), outliers_removed_std_dev(0), max_sample_count(PAPERTRACKER_MAX_VECTOR_SAMPLES) {
         vectors.push_back(v);
         cached_value = v;
     }

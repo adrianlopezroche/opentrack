@@ -6,19 +6,19 @@
  */
 #pragma once
 
-#include "ui_arucohead.h"
-#include "arucohead-settings.h"
+#include "ui_papertracker.h"
+#include "papertracker-settings.h"
 #include "api/plugin-api.hpp"
 #include <QTimer>
 
-class arucohead_tracker;
+class PaperTracker;
 
-class arucohead_dialog : public ITrackerDialog
+class PaperTrackerDialog : public ITrackerDialog
 {
     Q_OBJECT
 
 public:
-    arucohead_dialog();
+    PaperTrackerDialog();
     void register_tracker(ITracker *) override;
     void unregister_tracker() override;
     bool embeddable() noexcept override { return true; }
@@ -33,9 +33,9 @@ private:
         RESTART_REQUIRED
     };
 
-    arucohead_settings s;
-    Ui::arucohead_dialog ui;
-    arucohead_tracker *tracker;
+    papertracker_settings s;
+    Ui::papertracker_dialog ui;
+    PaperTracker *tracker;
     QTimer timer;
 private slots:
     void doOK();

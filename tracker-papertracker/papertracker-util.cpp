@@ -4,12 +4,12 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  */
-#include "arucohead-util.h"
+#include "papertracker-util.h"
 #include "config.h"
 #include <opencv2/opencv.hpp>
 #include <math.h>
 
-namespace arucohead {
+namespace papertracker {
     /* Compute average rotation from an std::vector of rotation vectors.
     */
     cv::Vec3d average_rotation(std::vector<cv::Vec3d> &rvecs)

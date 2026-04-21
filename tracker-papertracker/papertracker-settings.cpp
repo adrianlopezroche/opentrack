@@ -4,11 +4,9 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  */
-#pragma once
+#include "papertracker-settings.h"
 
-#include <opencv2/core.hpp>
-
-namespace arucohead {
-    int detect_aruco_mip_36h12(const cv::Mat &in, int &nRotations);
-    int detect_apriltag_36h11(const cv::Mat &in, int &nRotations);
-}
+/* Settings constructor.
+*/
+papertracker_settings::papertracker_settings() : opts("papertracker-tracker")
+{};

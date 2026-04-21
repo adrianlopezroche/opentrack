@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ArUcoheadHelpDialog</class>
- <widget class="QDialog" name="ArUcoheadHelpDialog">
+ <class>PaperTrackerHelpDialog</class>
+ <widget class="QDialog" name="PaperTrackerHelpDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ArUcoHead Help</string>
+   <string>PaperTracker Help</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -51,7 +51,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>ArUcoheadHelpDialog</receiver>
+   <receiver>PaperTrackerHelpDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -67,7 +67,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>ArUcoheadHelpDialog</receiver>
+   <receiver>PaperTrackerHelpDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

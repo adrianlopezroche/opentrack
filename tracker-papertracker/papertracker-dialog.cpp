@@ -4,15 +4,15 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  */
-#include "arucohead-tracker.h"
-#include "arucohead-dialog.h"
-#include "arucohead-help-dialog.h"
+#include "papertracker.h"
+#include "papertracker-dialog.h"
+#include "papertracker-help-dialog.h"
 #include "api/plugin-api.hpp"
 #include <opencv2/objdetect.hpp>
 #include <QPushButton>
 #include <sstream>
 
-arucohead_dialog::arucohead_dialog() : // NOLINT(cppcoreguidelines-pro-type-member-init)
+PaperTrackerDialog::PaperTrackerDialog() : // NOLINT(cppcoreguidelines-pro-type-member-init)
     tracker(nullptr)
 {
     ui.setupUi(this);
@@ -20,9 +20,9 @@ arucohead_dialog::arucohead_dialog() : // NOLINT(cppcoreguidelines-pro-type-memb
     for (const auto& str : video::camera_names())
         ui.cmbCameraName->addItem(str, str);
 
-    ui.cmbArucoDictionary->addItem("Original ArUco", arucohead_dictionary::ARUCOHEAD_DICT_ARUCO_ORIGINAL);
-    ui.cmbArucoDictionary->addItem("ArUco MIP 36h12", arucohead_dictionary::ARUCOHEAD_DICT_ARUCO_MIP_36h12);
-    ui.cmbArucoDictionary->addItem("AprilTag 36h11", arucohead_dictionary::ARUCOHEAD_DICT_APRILTAG_36h11);
+    ui.cmbArucoDictionary->addItem("Original ArUco", papertracker_dictionary::PAPERTRACKER_DICT_ARUCO_ORIGINAL);
+    ui.cmbArucoDictionary->addItem("ArUco MIP 36h12", papertracker_dictionary::PAPERTRACKER_DICT_ARUCO_MIP_36h12);
+    ui.cmbArucoDictionary->addItem("AprilTag 36h11", papertracker_dictionary::PAPERTRACKER_DICT_APRILTAG_36h11);
 
     tie_setting(s.frame_width, ui.sbFrameWidth);
     tie_setting(s.frame_height, ui.sbFrameHeight);
@@ -45,44 +45,44 @@ arucohead_dialog::arucohead_dialog() : // NOLINT(cppcoreguidelines-pro-type-memb
     connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(doCancel()));
     connect(ui.btnHelp, SIGNAL(clicked()), this, SLOT(doShowHelp()));
     connect(ui.btnCameraSettings, SIGNAL(clicked()), this, SLOT(doOpenCameraSettings()));
-    connect(&timer, &QTimer::timeout, this, &arucohead_dialog::doUpdateStatus);
+    connect(&timer, &QTimer::timeout, this, &PaperTrackerDialog::doUpdateStatus);
 
     timer.setInterval(250);
     doUpdateStatus();
 }
 
-void arucohead_dialog::register_tracker(ITracker* x)
+void PaperTrackerDialog::register_tracker(ITracker* x)
 {
-    tracker = static_cast<arucohead_tracker*>(x);
+    tracker = static_cast<PaperTracker*>(x);
     doUpdateStatus();
     timer.start();
 }
 
-void arucohead_dialog::unregister_tracker()
+void PaperTrackerDialog::unregister_tracker()
 {
     tracker = nullptr;
     doUpdateStatus();
     timer.stop();
 }
 
-void arucohead_dialog::set_buttons_visible(bool x)
+void PaperTrackerDialog::set_buttons_visible(bool x)
 {
     ui.buttonBox->setVisible(x);
 }
 
-void arucohead_dialog::doOK()
+void PaperTrackerDialog::doOK()
 {
     save();
     close();
 }
 
-void arucohead_dialog::doCancel()
+void PaperTrackerDialog::doCancel()
 {
     reload();
     close();
 }
 
-void arucohead_dialog::doOpenCameraSettings()
+void PaperTrackerDialog::doOpenCameraSettings()
 {
     if (tracker) {
         QMutexLocker l(&tracker->camera_mtx);
@@ -93,23 +93,23 @@ void arucohead_dialog::doOpenCameraSettings()
     }
 }
 
-void arucohead_dialog::doShowHelp()
+void PaperTrackerDialog::doShowHelp()
 {
-    ArucoheadHelpDialog helpDlg(this);
+    PaperTrackerHelpDialog helpDlg(this);
     helpDlg.exec();
 }
 
-void arucohead_dialog::save()
+void PaperTrackerDialog::save()
 {
     s.b->save();
 }
 
-void arucohead_dialog::reload()
+void PaperTrackerDialog::reload()
 {
     s.b->reload();
 }
 
-void arucohead_dialog::doUpdateStatus()
+void PaperTrackerDialog::doUpdateStatus()
 {
     if (tracker == nullptr)
         setStatusLabel(tracker_status::STOPPED);
@@ -121,7 +121,7 @@ void arucohead_dialog::doUpdateStatus()
         setStatusLabel(tracker_status::RUNNING);
 }
 
-void arucohead_dialog::setStatusLabel(tracker_status status)
+void PaperTrackerDialog::setStatusLabel(tracker_status status)
 {
     std::stringstream ss;
 

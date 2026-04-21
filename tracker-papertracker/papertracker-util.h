@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <opencv2/core.hpp>
 
-namespace arucohead {
+namespace papertracker {
     cv::Vec3d average_rotation(std::vector<cv::Vec3d> &rvecs);
     cv::Vec3d average_rotation(std::unordered_map<int, cv::Vec3d> &rvecs);
     cv::Vec3d average_rotation(std::unordered_map<int, cv::Vec3d> &rvecs, int exclude_id);

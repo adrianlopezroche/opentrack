@@ -15,17 +15,17 @@
 #include "video/camera.hpp"
 #include "compat/timer.hpp"
 #include "aruco/markerdetector.h"
-#include "arucohead-dialog.h"
+#include "papertracker-dialog.h"
 #include "head.h"
 #include "anglecoveragetracker.h"
 
-class arucohead_dialog;
+class PaperTrackerDialog;
 
-class arucohead_tracker : protected virtual QThread, public ITracker
+class PaperTracker : protected virtual QThread, public ITracker
 {
 public:
-    arucohead_tracker();
-    ~arucohead_tracker() override;
+    PaperTracker();
+    ~PaperTracker() override;
     module_status start_tracker(QFrame *) override;
     void data(double *data) override;
     void run() override;
@@ -41,7 +41,7 @@ private:
         {}
     };
 
-    arucohead::Head head;
+    papertracker::Head head;
     aruco::MarkerDetector detector;
     std::unique_ptr<video::impl::camera> camera;
     cv::Mat camera_matrix;
@@ -50,10 +50,10 @@ private:
     bool has_key_marker;
     std::vector<marker_detection_info> detected_markers;
     std::unordered_set<int> marker_highlight_set;
-    arucohead::AngleCoverageTracker visited_angles;
-    arucohead::AngleCoverageBin last_bin;
-    arucohead_settings s;
-    arucohead_static_settings static_settings;
+    papertracker::AngleCoverageTracker visited_angles;
+    papertracker::AngleCoverageBin last_bin;
+    papertracker_settings s;
+    papertracker_static_settings static_settings;
     std::unique_ptr<cv_video_widget> videoWidget;
     std::unique_ptr<QHBoxLayout> layout;
     Timer fps_timer;
@@ -78,14 +78,14 @@ private:
     void draw_axes(cv::Mat &image, const cv::Vec3d &rvec, const cv::Vec3d &tvec, double axis_length=1, bool color=true);
     void update_fps();
 
-    friend class arucohead_dialog;
+    friend class PaperTrackerDialog;
 };
 
-class arucohead_metadata : public Metadata
+class PaperTrackerMetadata : public Metadata
 {
     Q_OBJECT
 
-    QString name() override { return tr("ArUcoHead paper marker tracker"); }
-    QIcon icon() override { return QIcon(":/images/arucohead.png"); }
+    QString name() override { return tr("PaperTracker"); }
+    QIcon icon() override { return QIcon(":/images/papertracker.png"); }
 };
 

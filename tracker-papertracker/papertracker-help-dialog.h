@@ -8,19 +8,19 @@
 #include <QDialog>
 
 namespace Ui {
-class ArUcoheadHelpDialog;
+class PaperTrackerHelpDialog;
 }
 
-class ArucoheadHelpDialog : public QDialog
+class PaperTrackerHelpDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit ArucoheadHelpDialog(QWidget *parent = nullptr);
-    ~ArucoheadHelpDialog();
+    explicit PaperTrackerHelpDialog(QWidget *parent = nullptr);
+    ~PaperTrackerHelpDialog();
 
 private:
-    Ui::ArUcoheadHelpDialog *ui;
+    Ui::PaperTrackerHelpDialog *ui;
     void loadHelpText(const QString &filePath);
     QString removeSpaces(QString &input);
 };
