@@ -12,7 +12,7 @@
 namespace papertracker {
     /* Compute average rotation from an std::vector of rotation vectors.
     */
-    cv::Vec3d average_rotation(std::vector<cv::Vec3d> &rvecs)
+    cv::Vec3d average_rotation(const std::vector<cv::Vec3d> &rvecs)
     {
         if (rvecs.size() == 1)
             return rvecs[0];
@@ -45,7 +45,7 @@ namespace papertracker {
 
     /* Compute average rotation from an unordered map of rotation vectors.
     */
-    cv::Vec3d average_rotation(std::unordered_map<int, cv::Vec3d> &rvecs)
+    cv::Vec3d average_rotation(const std::unordered_map<int, cv::Vec3d> &rvecs)
     {
         std::vector<cv::Vec3d> vectors;
 
@@ -57,7 +57,7 @@ namespace papertracker {
 
     /* Compute average rotation from an unordered map of rotation vectors, excluding specified ID.
     */
-    cv::Vec3d average_rotation(std::unordered_map<int, cv::Vec3d> &rvecs, int exclude_id)
+    cv::Vec3d average_rotation(const std::unordered_map<int, cv::Vec3d> &rvecs, int exclude_id)
     {
         std::vector<cv::Vec3d> vectors;
 
@@ -70,7 +70,7 @@ namespace papertracker {
 
     /* Compute average translation from an std::vector of translation vectors.
     */
-    cv::Vec3d average_translation(std::vector<cv::Vec3d> &tvecs)
+    cv::Vec3d average_translation(const std::vector<cv::Vec3d> &tvecs)
     {
         if (tvecs.size() == 1)
             return tvecs[0];
@@ -94,7 +94,7 @@ namespace papertracker {
 
     /* Compute average translation from an unordered map of translation vectors.
     */
-    cv::Vec3d average_translation(std::unordered_map<int, cv::Vec3d> &tvecs)
+    cv::Vec3d average_translation(const std::unordered_map<int, cv::Vec3d> &tvecs)
     {
         std::vector<cv::Vec3d> vectors;
 
@@ -106,7 +106,7 @@ namespace papertracker {
 
     /* Compute average translation from an unordered map of translation vectors, excluding specified id.
     */
-    cv::Vec3d average_translation(std::unordered_map<int, cv::Vec3d> &tvecs, int exclude_id)
+    cv::Vec3d average_translation(const std::unordered_map<int, cv::Vec3d> &tvecs, int exclude_id)
     {
         std::vector<cv::Vec3d> vectors;
 
@@ -127,7 +127,7 @@ namespace papertracker {
     /* Find the (X, Z) intersection between a direction vector's projection onto the XZ plane
        and a circle lying on the XZ plane with its origin at (0, 0).
      */
-    cv::Vec3d circle_edge_intersection(double radius, cv::Vec3d &direction)
+    cv::Vec3d circle_edge_intersection(double radius, const cv::Vec3d &direction)
     {
         double magnitude = cv::sqrt(cv::pow(direction[0], 2) + cv::pow(direction[1], 2));
         if (magnitude == 0)
@@ -141,7 +141,7 @@ namespace papertracker {
 
     /* Rotate axis (0, 0, -1) by rvec and project onto XZ plane.
     */
-    cv::Vec3d get_xz_direction_vector(cv::Vec3d &rvec)
+    cv::Vec3d get_xz_direction_vector(const cv::Vec3d &rvec)
     {
         cv::Mat R;
         cv::Rodrigues(rvec, R);

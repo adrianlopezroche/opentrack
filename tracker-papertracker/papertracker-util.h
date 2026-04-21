@@ -11,15 +11,15 @@
 #include <opencv2/core.hpp>
 
 namespace papertracker {
-    cv::Vec3d average_rotation(std::vector<cv::Vec3d> &rvecs);
-    cv::Vec3d average_rotation(std::unordered_map<int, cv::Vec3d> &rvecs);
-    cv::Vec3d average_rotation(std::unordered_map<int, cv::Vec3d> &rvecs, int exclude_id);
-    cv::Vec3d average_translation(std::vector<cv::Vec3d> &tvecs);
-    cv::Vec3d average_translation(std::unordered_map<int, cv::Vec3d> &tvecs);
-    cv::Vec3d average_translation(std::unordered_map<int, cv::Vec3d> &tvecs, int exclude_id);
+    cv::Vec3d average_rotation(const std::vector<cv::Vec3d> &rvecs);
+    cv::Vec3d average_rotation(const std::unordered_map<int, cv::Vec3d> &rvecs);
+    cv::Vec3d average_rotation(const std::unordered_map<int, cv::Vec3d> &rvecs, int exclude_id);
+    cv::Vec3d average_translation(const std::vector<cv::Vec3d> &tvecs);
+    cv::Vec3d average_translation(const std::unordered_map<int, cv::Vec3d> &tvecs);
+    cv::Vec3d average_translation(const std::unordered_map<int, cv::Vec3d> &tvecs, int exclude_id);
     double circumference_to_radius(double circumference);
-    cv::Vec3d circle_edge_intersection(double radius, cv::Vec3d &direction);
-    cv::Vec3d get_xz_direction_vector(cv::Vec3d &rvec);
+    cv::Vec3d circle_edge_intersection(double radius, const cv::Vec3d &direction);
+    cv::Vec3d get_xz_direction_vector(const cv::Vec3d &rvec);
     cv::Vec4d rotation_matrix_to_quaternion(const cv::Mat &R);
     cv::Mat quaternion_to_rotation_matrix(const cv::Vec4d &quat);
     cv::Vec4d quaternion_multiply(const cv::Vec4d &q1, const cv::Vec4d &q2);
