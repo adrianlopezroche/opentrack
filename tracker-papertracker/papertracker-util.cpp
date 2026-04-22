@@ -257,13 +257,13 @@ namespace papertracker {
     /* Divide vector by (xz_reference, y_reference, xz_reference).
     */
     cv::Vec3d shrink_tvec(const cv::Vec3d &tvec, double xz_reference, double y_reference) {
-        return cv::Vec3d(tvec[0] / xz_reference, tvec[1] / y_reference, tvec[2] / y_reference);
+        return cv::Vec3d(tvec[0] / xz_reference, tvec[1] / y_reference, tvec[2] / xz_reference);
     }
 
     /* Multiply vector by (xz_reference, y_reference, xz_reference).
     */
     cv::Vec3d expand_tvec(const cv::Vec3d &tvec, double xz_reference, double y_reference) {
-        return cv::Vec3d(tvec[0] * xz_reference, tvec[1] * y_reference, tvec[2] * y_reference);
+        return cv::Vec3d(tvec[0] * xz_reference, tvec[1] * y_reference, tvec[2] * xz_reference);
     }
 
     /* Get marker's local transform relative to a reference head pose.
