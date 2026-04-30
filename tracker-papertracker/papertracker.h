@@ -33,12 +33,13 @@ public:
     bool restart_required() const;
 
 private:
-    struct marker_detection_info {
+    struct marker_detection_info : public std::vector<cv::Point2f> {
         int id;
-        std::vector<cv::Point2f> corners;
 
-        marker_detection_info(int id, const std::vector<cv::Point2f> &corners) : id(id), corners(corners)
-        {}
+        marker_detection_info(int id, const std::vector<cv::Point2f> &corners) : id(id) {
+            for (const auto corner : corners)
+                push_back(corner);
+        }
     };
 
     papertracker::Head head;

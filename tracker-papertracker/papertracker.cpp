@@ -136,7 +136,7 @@ bool PaperTracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
     */
     if (roi != nullptr) {
         for (auto &marker : detected_markers) {
-            for (auto &corner : marker.corners) {
+            for (auto &corner : marker) {
                 corner.x += roi->x;
                 corner.y += roi->y;
             }
@@ -161,7 +161,7 @@ bool PaperTracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
         std::vector<cv::Vec3d> tvecs;
         std::vector<double> reprojection_errors;
 
-        if (cv::solvePnPGeneric(objectPoints, detected_markers[i].corners, camera_matrix, dist_coeffs, rvecs, tvecs, false, cv::SOLVEPNP_IPPE_SQUARE, cv::noArray(), cv::noArray(), reprojection_errors)) {
+        if (cv::solvePnPGeneric(objectPoints, detected_markers[i], camera_matrix, dist_coeffs, rvecs, tvecs, false, cv::SOLVEPNP_IPPE_SQUARE, cv::noArray(), cv::noArray(), reprojection_errors)) {
             const int id = detected_markers[i].id;
 
             /* Choose the best solution among the two candidates. */
@@ -408,11 +408,9 @@ cv::Vec3d PaperTracker::get_approximate_head_origin(const std::vector<marker_det
         return cv::Vec3d(0, 0, 0);
 
     // Find line of vertical symmetry.
-    std::vector<std::vector<cv::Point2f>> markers;
-    for (const auto marker : detection_info)
-        markers.push_back(marker.corners);
-
-    const auto middle = get_marker_line_of_symmetry(markers);
+    const auto middle = get_marker_line_of_symmetry(
+        {detection_info.begin(), detection_info.end()}
+    );
 
     // Find bottom line of markers.
     double bottom = std::numeric_limits<double>::lowest();
@@ -430,19 +428,19 @@ cv::Vec3d PaperTracker::get_approximate_head_origin(const std::vector<marker_det
         float a_mid = 0;
         float b_mid = 0;
 
-        for (const auto &corner : detection_info[a].corners)
+        for (const auto &corner : detection_info[a])
             a_mid += corner.x;
 
-        for (const auto &corner : detection_info[b].corners)
+        for (const auto &corner : detection_info[b])
             b_mid += corner.x;
 
-        a_mid /= detection_info[a].corners.size();
-        b_mid /= detection_info[b].corners.size();
+        a_mid /= detection_info[a].size();
+        b_mid /= detection_info[b].size();
 
         return fabs(a_mid - middle) < fabs(b_mid - middle);
     });
 
-    if (row_markers.size() == 1 || vertical_line_intersects_marker(middle, detection_info[row_markers[0]].corners)) {
+    if (row_markers.size() == 1 || vertical_line_intersects_marker(middle, detection_info[row_markers[0]])) {
         // Use central marker.
         const int id = detection_info[row_markers[0]].id;
 
@@ -497,14 +495,14 @@ cv::Vec3d PaperTracker::get_approximate_head_origin(const std::vector<marker_det
 
 cv::Rect2f PaperTracker::get_marker_detected_region(const std::vector<marker_detection_info> &markers)
 {
-    if (markers.size() == 0 || markers[0].corners.size() == 0)
+    if (markers.size() == 0 || markers[0].size() == 0)
         return cv::Rect2f(0, 0, 0, 0);
 
-    cv::Point2f min = markers[0].corners[0];
-    cv::Point2f max = markers[0].corners[0];
+    cv::Point2f min = markers[0][0];
+    cv::Point2f max = markers[0][0];
 
     for (const auto &marker : markers) {
-        for (const auto &corner : marker.corners) {
+        for (const auto &corner : marker) {
             min.x = std::min(corner.x, min.x);
             min.y = std::min(corner.y, min.y);
             max.x = std::max(corner.x, max.x);
@@ -760,13 +758,15 @@ void PaperTracker::run() {
             }
         }
 
+        // frame_mat.setTo(cv::Scalar(0, 0, 0));
+
         /* Draw detected markers.
         */
         for (auto &marker : detected_markers) {
             if (marker_highlight_set.count(marker.id) > 0)
-                draw_marker_border(frame_mat, marker.corners, marker.id, cv::Scalar(0, 0, 255));
+                draw_marker_border(frame_mat, marker, marker.id, cv::Scalar(0, 0, 255));
             else
-                draw_marker_border(frame_mat, marker.corners, marker.id, cv::Scalar(0, 0, 170));
+                draw_marker_border(frame_mat, marker, marker.id, cv::Scalar(0, 0, 170));
         }
 
         /* Draw head bounding box and coordinate axes.
