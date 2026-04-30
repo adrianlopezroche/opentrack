@@ -215,6 +215,8 @@ namespace papertracker {
         return cv::Mat(3, 3, CV_64F, data).clone();
     }
 
+    /* Multiply two quaternions.
+    */
     cv::Vec4d quaternion_multiply(const cv::Vec4d &q1, const cv::Vec4d &q2) {
         const double w = q1[0]*q2[0] - q1[1]*q2[1] - q1[2]*q2[2] - q1[3]*q2[3];
         const double x = q1[0]*q2[1] + q1[1]*q2[0] + q1[2]*q2[3] - q1[3]*q2[2];
@@ -291,6 +293,8 @@ namespace papertracker {
         return {rvec_local, shrink_tvec(tvec_local, xz_reference, y_reference)};
     }
 
+    /* Get the angle between a marker and the camera's Z axis given the marker's rotation matrix.
+    */
     double get_marker_z_angle(const cv::Mat &R) {
         const cv::Vec3d marker_z(R.at<double>(0, 2), R.at<double>(1, 2), R.at<double>(2, 2));
         const cv::Vec3d camera_z(0.0, 0.0, -1.0);
@@ -301,6 +305,8 @@ namespace papertracker {
         return angle;
     }
 
+    /* Get the angle between a marker and the camera's Z axis given the marker's rotation vector.
+    */
     double get_marker_z_angle(const cv::Vec3d &rvec) {
         cv::Mat R;
         cv::Rodrigues(rvec, R);
@@ -308,6 +314,8 @@ namespace papertracker {
         return get_marker_z_angle(R);
     }
 
+    /* Get the angle between rotations for a pair of rotation vectors.
+    */
     double angle_between_rotations(const cv::Vec3d &v1, const cv::Vec3d &v2) {
         cv::Mat R1, R2;
         cv::Rodrigues(v1, R1);
