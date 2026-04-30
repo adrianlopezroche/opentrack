@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>353</width>
-    <height>718</height>
+    <height>690</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -127,7 +127,7 @@
       <item row="3" column="1">
        <widget class="QLabel" name="label_13">
         <property name="text">
-         <string>Key marker ID</string>
+         <string>First marker ID</string>
         </property>
        </widget>
       </item>
@@ -164,13 +164,10 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="sbMarkerHeight">
-        <property name="suffix">
-         <string> cm</string>
-        </property>
-        <property name="decimals">
-         <number>1</number>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Jawline to marker distance</string>
         </property>
        </widget>
       </item>
@@ -184,45 +181,13 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Jawline to marker distance</string>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="sbMarkerHeight">
+        <property name="suffix">
+         <string> cm</string>
         </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_17">
-        <property name="text">
-         <string>Roundness</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QSlider" name="sldCephalicIndex">
-        <property name="minimum">
-         <number>50</number>
-        </property>
-        <property name="maximum">
-         <number>100</number>
-        </property>
-        <property name="singleStep">
+        <property name="decimals">
          <number>1</number>
-        </property>
-        <property name="pageStep">
-         <number>5</number>
-        </property>
-        <property name="value">
-         <number>75</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="tickPosition">
-         <enum>QSlider::TickPosition::TicksBelow</enum>
-        </property>
-        <property name="tickInterval">
-         <number>5</number>
         </property>
        </widget>
       </item>
@@ -396,7 +361,6 @@
   <tabstop>sbMarkerMaximumAngle</tabstop>
   <tabstop>sbHeadCircumference</tabstop>
   <tabstop>sbMarkerHeight</tabstop>
-  <tabstop>sldCephalicIndex</tabstop>
   <tabstop>btnHelp</tabstop>
  </tabstops>
  <resources/>

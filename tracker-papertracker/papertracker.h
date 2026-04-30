@@ -71,6 +71,7 @@ private:
     void cycle_threshold_params();
     void set_threshold_params();
     cv::Mat build_camera_matrix(int image_width, int image_height, double diagonal_fov);
+    cv::Vec3d get_approximate_head_origin(const std::vector<marker_detection_info> &detection_info, const std::unordered_map<int, cv::Vec3d> &marker_rvecs, const std::unordered_map<int, cv::Vec3d> &marker_tvecs, int *key_marker = nullptr);
     cv::Rect2f get_marker_detected_region(const std::vector<marker_detection_info> &markers);
     bool markers_disappeared(const std::vector<int> &expected, const std::vector<marker_detection_info> &detected);
     void draw_head_bounding_box(cv::Mat &image);

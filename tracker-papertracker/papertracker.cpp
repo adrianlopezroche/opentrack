@@ -239,33 +239,17 @@ bool PaperTracker::process_frame(cv::Mat &frame, const cv::Rect2i *roi)
     /* Find key marker if it has not yet been detected.
     */
     if (!has_key_marker) {
-        if (!selected_markers.empty()) {
-            for (size_t i = 0; i < selected_markers.size(); ++i) {
-                const int id = selected_markers[i].id;
+        int key_marker_id = -1;
+        auto head_origin = get_approximate_head_origin(detected_markers, marker_rvecs, marker_tvecs, &key_marker_id);
 
-                if (id != s.first_marker_id)
-                    continue;
+        if (key_marker_id >= 0 && marker_rvecs.count(key_marker_id) > 0) {
+            auto head_orientation = cv::Vec3d(CV_PI, 0, 0);
 
-                if (marker_rvecs.count(id) > 0) {
-                    auto v = get_xz_direction_vector(marker_rvecs[id]);
-                    auto c = circle_edge_intersection(circumference_to_radius(s.head_circumference_cm), v);
+            auto [rvec_local, tvec_local] = get_marker_local_transform(marker_rvecs[key_marker_id], marker_tvecs[key_marker_id], head_orientation, head_origin, circumference_to_radius(s.head_circumference_cm), s.marker_height_cm);
 
-                    c[0] *= static_settings.cephalic_index / 100.0;
+            head.set_handle(Marker(key_marker_id, MeanVector(rvec_local, MeanVector::VectorType::ROTATION), MeanVector(tvec_local, MeanVector::VectorType::POLAR)));
 
-                    cv::Vec3d reference_rvec(CV_PI, 0, 0);
-
-                    cv::Vec3d reference_tvec = marker_tvecs[id];
-                    reference_tvec[0] += c[0];
-                    reference_tvec[1] += s.marker_height_cm;
-                    reference_tvec[2] += c[1];
-
-                    auto [rvec_local, tvec_local] = get_marker_local_transform(marker_rvecs[id], marker_tvecs[id], reference_rvec, reference_tvec, circumference_to_radius(s.head_circumference_cm), s.marker_height_cm);
-
-                    head.set_handle(Marker(id, MeanVector(rvec_local, MeanVector::VectorType::ROTATION), MeanVector(tvec_local, MeanVector::VectorType::POLAR)));
-
-                    has_key_marker = true;
-                }
-            }
+            has_key_marker = true;
         }
     }
     
@@ -416,6 +400,99 @@ cv::Mat PaperTracker::build_camera_matrix(int image_width, int image_height, dou
     };
 
     return cv::Mat(3, 3, CV_64F, data).clone();
+}
+
+cv::Vec3d PaperTracker::get_approximate_head_origin(const std::vector<marker_detection_info> &detection_info, const std::unordered_map<int, cv::Vec3d> &marker_rvecs, const std::unordered_map<int, cv::Vec3d> &marker_tvecs, int *key_marker)
+{
+    if (detection_info.size() == 0)
+        return cv::Vec3d(0, 0, 0);
+
+    // Find line of vertical symmetry.
+    std::vector<std::vector<cv::Point2f>> markers;
+    for (const auto marker : detection_info)
+        markers.push_back(marker.corners);
+
+    const auto middle = get_marker_line_of_symmetry(markers);
+
+    // Find bottom line of markers.
+    double bottom = std::numeric_limits<double>::lowest();
+    for (const auto marker : detection_info)
+        if (marker_tvecs.at(marker.id).val[1] > bottom)
+            bottom = marker_tvecs.at(marker.id).val[1];
+
+    std::vector<size_t> row_markers;
+    for (size_t i = 0; i < detection_info.size(); ++i)
+        if (fabs(marker_tvecs.at(detection_info[i].id).val[1] - bottom) < static_settings.aruco_marker_size_mm / 10.0 / 2.0)
+            row_markers.push_back(i);
+
+    // Sort markers by how close they are to the line of symmetry.
+    std::sort(row_markers.begin(), row_markers.end(), [detection_info, middle](const int a, const int b) {
+        float a_mid = 0;
+        float b_mid = 0;
+
+        for (const auto &corner : detection_info[a].corners)
+            a_mid += corner.x;
+
+        for (const auto &corner : detection_info[b].corners)
+            b_mid += corner.x;
+
+        a_mid /= detection_info[a].corners.size();
+        b_mid /= detection_info[b].corners.size();
+
+        return fabs(a_mid - middle) < fabs(b_mid - middle);
+    });
+
+    if (row_markers.size() == 1 || vertical_line_intersects_marker(middle, detection_info[row_markers[0]].corners)) {
+        // Use central marker.
+        const int id = detection_info[row_markers[0]].id;
+
+        const auto v = get_xz_direction_vector(marker_rvecs.at(id));
+        const auto c = circle_edge_intersection(circumference_to_radius(s.head_circumference_cm), v);
+
+        cv::Vec3d reference_tvec = marker_tvecs.at(id);
+        reference_tvec[0] += c[0] * 0.80;
+        reference_tvec[1] += s.marker_height_cm;
+        reference_tvec[2] += c[1];
+
+        if (key_marker)
+            *key_marker = id;
+
+        return reference_tvec;
+    } else {
+        // Use the two middle markers, averaging out their centers.
+        const size_t a = row_markers.size() / 2 - 1;
+        const size_t b = a + 1;
+
+        const int id_a = detection_info[row_markers[a]].id;
+        const int id_b = detection_info[row_markers[b]].id;
+
+        const auto va = get_xz_direction_vector(marker_rvecs.at(id_a));
+        const auto vb = get_xz_direction_vector(marker_rvecs.at(id_b));
+
+        const auto ca = circle_edge_intersection(circumference_to_radius(s.head_circumference_cm), va);
+        const auto cb = circle_edge_intersection(circumference_to_radius(s.head_circumference_cm), vb);
+
+        cv::Vec3d reference_tvec_a = marker_tvecs.at(id_a);
+        reference_tvec_a[0] += ca[0];
+        reference_tvec_a[1] += s.marker_height_cm;
+        reference_tvec_a[2] += ca[1];
+
+        cv::Vec3d reference_tvec_b = marker_tvecs.at(id_b);
+        reference_tvec_b[0] += cb[0];
+        reference_tvec_b[1] += s.marker_height_cm;
+        reference_tvec_b[2] += cb[1];
+
+        if (key_marker)
+            *key_marker = id_a;
+
+        const double da = fabs(ca[0]);
+        const double db = fabs(cb[0]);
+
+        if (da + db > 0.0)
+            return (reference_tvec_a * db + reference_tvec_b * da) / (da + db);
+        else
+            return (reference_tvec_a + reference_tvec_b) / 2.0;
+    }
 }
 
 cv::Rect2f PaperTracker::get_marker_detected_region(const std::vector<marker_detection_info> &markers)
@@ -581,9 +658,6 @@ module_status PaperTracker::start_tracker(QFrame *videoframe)
     static_settings.aruco_marker_size_mm = s.aruco_marker_size_mm;
     static_settings.aruco_dictionary = s.aruco_dictionary;
 
-    const double cephalic_index { s.cephalic_index };
-    static_settings.cephalic_index = cephalic_index;
-
     switch (static_settings.aruco_dictionary) {
         case PAPERTRACKER_DICT_ARUCO_MIP_36h12:
             detector.setMakerDetectorFunction(detect_aruco_mip_36h12);
@@ -730,8 +804,6 @@ bool PaperTracker::tracking_started() const
 
 bool PaperTracker::restart_required() const
 {
-    const double cephalic_index { s.cephalic_index };
-
     return
         static_settings.frame_width != s.frame_width ||
         static_settings.frame_height != s.frame_height ||
@@ -739,8 +811,7 @@ bool PaperTracker::restart_required() const
         static_settings.use_mjpeg != s.use_mjpeg ||
         static_settings.camera_name != s.camera_name ||
         static_settings.aruco_marker_size_mm != s.aruco_marker_size_mm ||
-        static_settings.aruco_dictionary != s.aruco_dictionary ||
-        static_settings.cephalic_index != cephalic_index;
+        static_settings.aruco_dictionary != s.aruco_dictionary;
 }
 
 /* Supply position and orientation data.

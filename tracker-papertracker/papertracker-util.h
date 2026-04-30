@@ -30,4 +30,6 @@ namespace papertracker {
     double get_marker_z_angle(const cv::Mat &R);
     double get_marker_z_angle(const cv::Vec3d &rvec);
     double angle_between_rotations(const cv::Vec3d &rvec1, const cv::Vec3d &rvec2);
+    float get_marker_line_of_symmetry(const std::vector<std::vector<cv::Point2f>> &markers);
+    bool vertical_line_intersects_marker(const float line_x, const std::vector<cv::Point2f> &corners);
 }

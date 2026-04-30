@@ -33,7 +33,6 @@ PaperTrackerDialog::PaperTrackerDialog() : // NOLINT(cppcoreguidelines-pro-type-
     tie_setting(s.first_marker_id, ui.sbFirstMarkerID);
     tie_setting(s.head_circumference_cm, ui.sbHeadCircumference);
     tie_setting(s.marker_height_cm, ui.sbMarkerHeight);
-    tie_setting(s.cephalic_index, ui.sldCephalicIndex);
     tie_setting(s.aruco_dictionary, ui.cmbArucoDictionary);
     tie_setting(s.camera_name, ui.cmbCameraName);
     tie_setting(s.zoom, ui.sbZoom);

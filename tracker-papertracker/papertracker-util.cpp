@@ -319,4 +319,186 @@ namespace papertracker {
 
         return acos(cos_angle);
     }
+
+    /* Get a tight bounding box for a set of markers.
+    */
+    cv::Rect2f get_marker_bounding_box(const std::vector<std::vector<cv::Point2f>> &markers)
+    {
+        if (markers.size() == 0 || markers[0].size() == 0)
+            return cv::Rect2f(0, 0, 0, 0);
+
+        cv::Point2f min = markers[0][0];
+        cv::Point2f max = markers[0][0];
+
+        for (const auto &marker : markers) {
+            for (const auto &corner : marker) {
+                min.x = std::min(corner.x, min.x);
+                min.y = std::min(corner.y, min.y);
+                max.x = std::max(corner.x, max.x);
+                max.y = std::max(corner.y, max.y);
+            }
+        }
+
+        return cv::Rect2f(min, max);
+    }
+
+    /* Count the number of pixels in common between two sides of an image when
+       one side is folded over the other across a given line.
+    */
+    int symmetry_score(const cv::Mat& image, int line_of_symmetry_x) {
+        const int image_width = image.cols;
+        const int image_height = image.rows;
+
+        const int left_width = line_of_symmetry_x;
+        const int right_width = image_width - line_of_symmetry_x;
+        const int smaller_width = std::min(left_width, right_width);
+
+        // One side needs to be at least 1 pixel wide.
+        if (smaller_width <= 0)
+            return 0;
+
+        // Crop the image into two equal halves split along the line of symmetry.
+        cv::Mat left = image(cv::Rect(line_of_symmetry_x - smaller_width, 0, smaller_width, image_height));
+        cv::Mat right = image(cv::Rect(line_of_symmetry_x, 0, smaller_width, image_height));
+
+        // Flip the left half horizontally so it mirrors onto the right
+        cv::Mat flipped_left;
+        cv::flip(left, flipped_left, 1);
+
+        // Create binary mask for the left half.
+        cv::Mat left_mask;
+        if (flipped_left.channels() == 3)
+            cv::cvtColor(flipped_left, left_mask,  cv::COLOR_BGR2GRAY);
+        else
+            left_mask = flipped_left.clone();
+
+        cv::threshold(left_mask, left_mask,  0, 255, cv::THRESH_BINARY);
+
+        // Create binary mask for the right half.
+        cv::Mat right_mask;
+        if (right.channels() == 3)
+            cv::cvtColor(right, right_mask, cv::COLOR_BGR2GRAY);
+        else
+            right_mask = right.clone();
+
+        cv::threshold(right_mask, right_mask, 0, 255, cv::THRESH_BINARY);
+
+        // Bitwise AND the two halves.
+        cv::Mat overlap;
+        cv::bitwise_and(left_mask, right_mask, overlap);
+
+        // Count and return the number of matching pixels.
+        return cv::countNonZero(overlap);
+    }
+
+    /* Find the vertical line that divides the detected markers into roughly symmetrical
+       halves. This is usually the midpoint of their bounding box, but not always. If a
+       marker at either end of a set is undetected for any reason the bounding box
+       midpoint will no longer represent the marker set's actual midpoint. This algorithm
+       can, at least in some cases, give a better estimate than the naive approach.
+    */
+    float get_marker_line_of_symmetry(const std::vector<std::vector<cv::Point2f>> &markers) {
+        if (markers.size() == 0)
+            return 0;
+
+        // Operate inside the confines of the marker set's bounding box.
+        auto rect = get_marker_bounding_box(markers);
+
+        // Collect the minimum and maximum X values for each marker. The midpoints between
+        // these extents represent potential lines of symmetry for the marker set.
+        std::vector<float> extents;
+        for (const auto &marker : markers) {
+            float min_x = marker.at(0).x - rect.x;
+            float max_x = marker.at(0).x - rect.x;
+
+            for (size_t i = 0; i < marker.size(); ++i) {
+                min_x = std::min(marker[i].x - rect.x, min_x);
+                max_x = std::max(marker[i].x - rect.x, max_x);
+            }
+
+            extents.push_back(min_x);
+            extents.push_back(max_x);
+        }
+
+        // Sort the extents in left to right order.
+        std::sort(extents.begin(), extents.end(), [](float a, float b) {
+            return a < b;
+        });
+
+        // Create an image the same size as the bounding box for the markers.
+        cv::Mat image(rect.height, rect.width, CV_8UC1, cv::Scalar(0));
+
+        // Represent marker corners using integer values (fillPoly requires integer values).
+        std::vector<std::vector<cv::Point2i>> int_markers;
+        for (auto marker : markers) {
+            std::vector<cv::Point2i> points;
+
+            for (const auto &p : marker)
+                points.push_back(cv::Point2i(p.x - rect.x, p.y - rect.y));
+
+            int_markers.push_back(points);
+        }
+
+        // Draw the markers in solid white.
+        cv::fillPoly(image, int_markers, cv::Scalar(255));
+
+        // Use marker extents to find the best line of symmetry.
+        int best_score = 0;
+        float best_line_x = 0;
+
+        for (size_t i = 0; i + 1 < extents.size(); ++i) {
+            const auto line_x = round((extents[i] + extents[i + 1]) / 2.0);
+            const auto score = symmetry_score(image, line_x);
+
+            qDebug() << "score:" << score << line_x;
+
+            if (score > best_score)
+            {
+                best_score = score;
+                best_line_x = line_x;
+            }
+        }
+
+        // Return the line of symmetry expressed in the original coordinate system.
+        return best_line_x + rect.x;
+    }
+
+    /* Find the point of intersection between a vertical line and a line segment.
+    */
+    std::optional<cv::Point2f> vertical_line_intersection(float line_x, const cv::Point2f& p1, const cv::Point2f& p2) {
+        float min_x = std::min(p1.x, p2.x);
+        float max_x = std::max(p1.x, p2.x);
+
+        if (min_x > line_x || max_x < line_x)
+            return std::nullopt;
+
+        const float delta_x = p2.x - p1.x;
+
+        if (std::abs(delta_x) < 1e-5f)
+            return cv::Point2f(line_x, (p1.y + p2.y) / 2.0f);
+
+        const float t = (line_x - p1.x) / delta_x;
+        const float y_intercept = p1.y + t * (p2.y - p1.y);
+
+        return cv::Point2f(line_x, y_intercept);
+    }
+
+    /* Determine whether a vertical line intersects the given marker.
+    */
+    bool vertical_line_intersects_marker(const float line_x, const std::vector<cv::Point2f> &corners)
+    {
+        if (corners.size() != 4)
+            return false;
+
+        for (size_t i = 0; i < corners.size(); ++i) {
+            const auto p0 = corners[i];
+            const auto p1 = corners[(i + 1) % corners.size()];
+
+            auto intersection = vertical_line_intersection(line_x, p0, p1);
+            if (intersection.has_value())
+                return true;
+        }
+
+        return false;
+    }
 }
