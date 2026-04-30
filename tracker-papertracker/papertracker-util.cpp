@@ -458,8 +458,6 @@ namespace papertracker {
             const auto line_x = round((extents[i] + extents[i + 1]) / 2.0);
             const auto score = symmetry_score(image, line_x);
 
-            qDebug() << "score:" << score << line_x;
-
             if (score > best_score)
             {
                 best_score = score;
