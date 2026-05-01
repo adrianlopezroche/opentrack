@@ -654,15 +654,20 @@ module_status PaperTracker::start_tracker(QFrame *videoframe)
     static_settings.use_mjpeg = s.use_mjpeg;
     static_settings.camera_name = s.camera_name;
     static_settings.aruco_marker_size_mm = s.aruco_marker_size_mm;
-    static_settings.aruco_dictionary = s.aruco_dictionary;
 
-    switch (static_settings.aruco_dictionary) {
+    current_dictionary = s.aruco_dictionary;
+
+    switch (current_dictionary) {
         case PAPERTRACKER_DICT_ARUCO_MIP_36h12:
             detector.setMakerDetectorFunction(detect_aruco_mip_36h12);
             break;
 
         case PAPERTRACKER_DICT_APRILTAG_36h11:
             detector.setMakerDetectorFunction(detect_apriltag_36h11);
+            break;
+
+        case PAPERTRACKER_DICT_ARUCO_ORIGINAL:
+            detector.setMakerDetectorFunction(aruco::FiducidalMarkers::detect);
             break;
     }
 
@@ -802,6 +807,27 @@ bool PaperTracker::tracking_started() const
     return started_;
 }
 
+void PaperTracker::update_settings()
+{
+    if (current_dictionary != s.aruco_dictionary) {
+        switch (s.aruco_dictionary) {
+            case PAPERTRACKER_DICT_ARUCO_MIP_36h12:
+                detector.setMakerDetectorFunction(detect_aruco_mip_36h12);
+                break;
+
+            case PAPERTRACKER_DICT_APRILTAG_36h11:
+                detector.setMakerDetectorFunction(detect_apriltag_36h11);
+                break;
+
+            case PAPERTRACKER_DICT_ARUCO_ORIGINAL:
+                detector.setMakerDetectorFunction(aruco::FiducidalMarkers::detect);
+                break;
+        }
+
+        current_dictionary = s.aruco_dictionary;
+    }
+}
+
 bool PaperTracker::restart_required() const
 {
     return
@@ -810,8 +836,7 @@ bool PaperTracker::restart_required() const
         static_settings.fps != s.fps ||
         static_settings.use_mjpeg != s.use_mjpeg ||
         static_settings.camera_name != s.camera_name ||
-        static_settings.aruco_marker_size_mm != s.aruco_marker_size_mm ||
-        static_settings.aruco_dictionary != s.aruco_dictionary;
+        static_settings.aruco_marker_size_mm != s.aruco_marker_size_mm;
 }
 
 /* Supply position and orientation data.
@@ -850,6 +875,7 @@ PaperTracker::PaperTracker() :
 {
     opencv_init();
     set_threshold_params();
+    current_dictionary = s.aruco_dictionary;
 }
 
 /* Tracker destructor.

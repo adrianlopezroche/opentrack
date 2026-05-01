@@ -110,6 +110,9 @@ void PaperTrackerDialog::reload()
 
 void PaperTrackerDialog::doUpdateStatus()
 {
+    if (tracker != nullptr)
+        tracker->update_settings();
+
     if (tracker == nullptr)
         setStatusLabel(tracker_status::STOPPED);
     else if (!tracker->tracking_started())

@@ -45,5 +45,4 @@ struct papertracker_static_settings
     bool use_mjpeg;
     QString camera_name;
     int aruco_marker_size_mm;
-    papertracker_dictionary aruco_dictionary;
 };

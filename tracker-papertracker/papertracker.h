@@ -15,6 +15,7 @@
 #include "video/camera.hpp"
 #include "compat/timer.hpp"
 #include "aruco/markerdetector.h"
+#include "aruco/arucofidmarkers.h"
 #include "papertracker-dialog.h"
 #include "head.h"
 #include "anglecoveragetracker.h"
@@ -30,6 +31,7 @@ public:
     void data(double *data) override;
     void run() override;
     bool tracking_started() const;
+    void update_settings();
     bool restart_required() const;
 
 private:
@@ -44,6 +46,7 @@ private:
 
     papertracker::Head head;
     aruco::MarkerDetector detector;
+    papertracker_dictionary current_dictionary;
     std::unique_ptr<video::impl::camera> camera;
     cv::Mat camera_matrix;
     std::vector<double> dist_coeffs;
