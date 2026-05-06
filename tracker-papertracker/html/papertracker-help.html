@@ -80,7 +80,7 @@
         </p>
         <p>A resolution of 640 x 480 or higher is recommended.</p>
         <p><b>FPS</b>: The video stream's frame rate. 30 Hz is the most common; more advanced cameras may support 60 Hz or higher (which may require enabling Use MJPEG, depending on the camera). Lower frame rates are also possible, but 30 Hz or above is recommended.</p>
-        <p><b>Diagonal FOV</b>: The camera's diagonal field of view as specified by the manufacturer. Some manufacturers may provide the horizontal field of view instead, in which case the number must be converted to diagonalfor accurate tracking.</p>
+        <p><b>Diagonal FOV</b>: The camera's diagonal field of view as specified by the manufacturer. Some manufacturers may provide the horizontal field of view instead, in which case the number must be converted to diagonal for accurate tracking. If these numbers are not readily available, the diagonal field of view may also be found by measuring the diagonal size of the camera frame (<i>D</i>) at a given distance (<i>d</i>) from the camera, with the formula <i>arctan(D / 2d) * 2</i>.</p>
         <p><b>Zoom</b>: Digitally zoom in toward the center of the video frame, cropping it to a smaller size. This can help eliminate background elements that interfere with detection and may also reduce the processing load.</p>
         <p><b>Use MJPEG</b>: Request an MJPEG video stream from the camera. Certain resolutions and frame rates may only be available in this mode, depending on the camera.</p>
         <p><b>Settings (Open)</b>: Opens the system camera settings dialog.</p>
