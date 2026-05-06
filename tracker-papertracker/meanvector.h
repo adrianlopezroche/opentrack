@@ -24,6 +24,7 @@ namespace papertracker {
         MeanVector(const cv::Vec3d &v, VectorType type);
 
         void update(const cv::Vec3d &vector);
+        void set(const cv::Vec3d &vector);
         void remove_outliers(double std_dev_threshold = default_std_dev_threshold);
         bool outliers_removed(double within_std_dev = default_std_dev_threshold) const;
         int sample_count() const;

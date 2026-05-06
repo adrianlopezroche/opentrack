@@ -127,7 +127,7 @@ namespace papertracker {
     /* Find the (X, Z) intersection between a direction vector's projection onto the XZ plane
        and a circle lying on the XZ plane with its origin at (0, 0).
      */
-    cv::Vec3d circle_edge_intersection(double radius, const cv::Vec3d &direction)
+    cv::Vec2d circle_edge_intersection(double radius, const cv::Vec2d &direction)
     {
         double magnitude = cv::sqrt(cv::pow(direction[0], 2) + cv::pow(direction[1], 2));
         if (magnitude == 0)
@@ -141,7 +141,7 @@ namespace papertracker {
 
     /* Rotate axis (0, 0, -1) by rvec and project onto XZ plane.
     */
-    cv::Vec3d get_xz_direction_vector(const cv::Vec3d &rvec)
+    cv::Vec2d get_xz_direction_vector(const cv::Vec3d &rvec)
     {
         cv::Mat R;
         cv::Rodrigues(rvec, R);
@@ -154,7 +154,7 @@ namespace papertracker {
         if (norm != 0)
             vt = vt / cv::norm(vt);
 
-        return cv::Vec3d(vt.at<double>(0), vt.at<double>(2));
+        return cv::Vec2d(vt.at<double>(0), vt.at<double>(2));
     }
 
     /* Convert rotation matrix to quaternion.
@@ -256,21 +256,9 @@ namespace papertracker {
         return { roll, pitch, yaw };
     }
 
-    /* Divide vector by (xz_reference, y_reference, xz_reference).
-    */
-    cv::Vec3d shrink_tvec(const cv::Vec3d &tvec, double xz_reference, double y_reference) {
-        return cv::Vec3d(tvec[0] / xz_reference, tvec[1] / y_reference, tvec[2] / xz_reference);
-    }
-
-    /* Multiply vector by (xz_reference, y_reference, xz_reference).
-    */
-    cv::Vec3d expand_tvec(const cv::Vec3d &tvec, double xz_reference, double y_reference) {
-        return cv::Vec3d(tvec[0] * xz_reference, tvec[1] * y_reference, tvec[2] * xz_reference);
-    }
-
     /* Get marker's local transform relative to a reference head pose.
     */
-    std::pair<cv::Vec3d, cv::Vec3d> get_marker_local_transform(const cv::Vec3d &rvec_measured, const cv::Vec3d &tvec_measured, const cv::Vec3d &pose_rvec, const cv::Vec3d &pose_tvec, double xz_reference, double y_reference) {
+    std::pair<cv::Vec3d, cv::Vec3d> get_marker_local_transform(const cv::Vec3d &rvec_measured, const cv::Vec3d &tvec_measured, const cv::Vec3d &pose_rvec, const cv::Vec3d &pose_tvec) {
         cv::Vec3d rvec_local;
         cv::Vec3d tvec_local;
 
@@ -290,7 +278,7 @@ namespace papertracker {
         cv::Mat tvec_local_mat = R_body_to_camera.inv() * cv::Mat(tvec_relative);
         tvec_local = tvec_local_mat.reshape(1, 1);
 
-        return {rvec_local, shrink_tvec(tvec_local, xz_reference, y_reference)};
+        return {rvec_local, tvec_local};
     }
 
     /* Get the angle between a marker and the camera's Z axis given the marker's rotation matrix.

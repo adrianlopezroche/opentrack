@@ -32,6 +32,14 @@ namespace papertracker {
         outliers_removed_ = false;
     }
 
+    void MeanVector::set(const cv::Vec3d &vector) {
+        vectors.clear();
+        vectors.push_back(vector);
+        cached_value = vector;
+        outliers_removed_ = true;
+        outliers_removed_std_dev = 0;
+    }
+
     void MeanVector::remove_outliers(double std_dev_threshold) {
         if (vectors.size() < 3)
             return;

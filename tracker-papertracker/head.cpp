@@ -9,23 +9,37 @@
 #include <opencv2/opencv.hpp>
 
 namespace papertracker {
-    bool Head::has_handle(int id) {
-        return handles.count(id) > 0;
+    void Head::set_handle_origin(const cv::Vec3d &origin)
+    {
+        handle_origin = origin;
     }
 
-    void Head::set_handle(const Marker &handle) {
-        handles[handle.id] = handle;
+    bool Head::has_handle(int id) {
+        return handles.count(id) > 0;
     }
 
     Marker &Head::get_handle(int id) {
         return handles.at(id);
     }
 
+    void Head::set_handle(const Marker &handle_ref) {
+        Marker handle = handle_ref;
+
+        handle.tvec_local.set(handle.tvec_local.get() - handle_origin);
+
+        handles[handle.id] = handle;
+    }
+
+    void Head::update_handle(int id, const cv::Vec3d &rvec, const cv::Vec3d &tvec) {
+        handles.at(id).rvec_local.update(rvec);
+        handles.at(id).tvec_local.update(tvec - handle_origin);
+    }
+
     size_t Head::num_handles() {
         return handles.size();
     }
 
-    std::pair<cv::Vec3d, cv::Vec3d> Head::get_pose_from_handle_transform(int id, cv::Vec3d &rvec_measured, cv::Vec3d &tvec_measured, double xz_reference, double y_reference) {
+    std::pair<cv::Vec3d, cv::Vec3d> Head::get_pose_from_handle_transform(int id, cv::Vec3d &rvec_measured, cv::Vec3d &tvec_measured) {
         cv::Vec3d pose_rvec;
         cv::Vec3d pose_tvec;
 
@@ -38,8 +52,9 @@ namespace papertracker {
         cv::Mat R_pose = R_marker * R_handle.inv();
         cv::Rodrigues(R_pose, pose_rvec);
 
-        auto expanded_tvec = expand_tvec(handles[id].tvec_local.get(), xz_reference, y_reference);
-        cv::Mat pose_tvec_mat = R_pose * cv::Mat(-expanded_tvec) + cv::Mat(tvec_measured);
+        const auto marker_tvec = handle_origin + handles[id].tvec_local.get();
+
+        cv::Mat pose_tvec_mat = R_pose * cv::Mat(-marker_tvec) + cv::Mat(tvec_measured);
         pose_tvec = pose_tvec_mat.reshape(1, 1);
 
         return {pose_rvec, pose_tvec};
