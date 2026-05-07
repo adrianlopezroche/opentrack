@@ -423,6 +423,8 @@ cv::Mat PaperTracker::build_camera_matrix(int image_width, int image_height, dou
     return cv::Mat(3, 3, CV_64F, data).clone();
 }
 
+/* Get the marker or markers closest to the bottom center of the current marker setup as observed by the camera.
+*/
 std::vector<int> PaperTracker::get_key_markers(const std::vector<marker_detection_info> &detection_info, const std::unordered_map<int, cv::Vec3d> &marker_tvecs)
 {
     if (detection_info.size() == 0)
@@ -484,6 +486,9 @@ std::vector<int> PaperTracker::get_key_markers(const std::vector<marker_detectio
     return key_markers;
 }
 
+/* Get the head's starting position from the orientation and position of one or two markers. These markers
+   are assumed to follow the curvature of the head.
+*/
 cv::Vec3d PaperTracker::get_approximate_head_origin(const std::vector<cv::Vec3d> &marker_rvecs, const std::vector<cv::Vec3d> &marker_tvecs)
 {
     if (marker_rvecs.size() == 1) {
@@ -520,6 +525,8 @@ cv::Vec3d PaperTracker::get_approximate_head_origin(const std::vector<cv::Vec3d>
     }
 }
 
+/* Get a bounding box for a set of markers, its size increased by PAPERTRACKER_ROI_GROWTH_FACTOR.
+*/
 cv::Rect2f PaperTracker::get_marker_detected_region(const std::vector<marker_detection_info> &markers)
 {
     if (markers.size() == 0 || markers[0].size() == 0)
@@ -548,6 +555,8 @@ cv::Rect2f PaperTracker::get_marker_detected_region(const std::vector<marker_det
     return cv::Rect2f(min, max);
 }
 
+/* Determine if any markers have not been detected that should have been detected.
+*/
 bool PaperTracker::markers_disappeared(const std::vector<int> &expected, const std::vector<marker_detection_info> &detected) {
     for (const int expected_id : expected) {
         bool found = false;
